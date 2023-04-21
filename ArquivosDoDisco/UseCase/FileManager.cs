@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using ArquivosDoDisco.Entities;
-using ArquivosDoDisco.UseCase;
 
 namespace ArquivosDoDisco.UseCase
 {
@@ -57,6 +53,8 @@ namespace ArquivosDoDisco.UseCase
 
             if (findHandle != IntPtr.Zero)
             {
+                List<Task> tasks = new List<Task>();
+
                 do
                 {
                     if (findData.cFileName == "." || findData.cFileName == "..") continue;
@@ -72,7 +70,9 @@ namespace ArquivosDoDisco.UseCase
                         };
 
                         folder.Folders.Add(subFolder);
-                        ListFolderContents(subFolder);
+
+                        // Utiliza Task.Run para processar a pasta de forma assíncrona
+                        tasks.Add(Task.Run(() => ListFolderContents(subFolder)));
                     }
                     else // Arquivo
                     {
@@ -91,17 +91,11 @@ namespace ArquivosDoDisco.UseCase
                 while (FindNextFile(findHandle, out findData));
 
                 FindClose(findHandle);
+
+                // Aguarda a conclusão de todas as tasks antes de retornar
+                Task.WaitAll(tasks.ToArray());
             }
         }
+
     }
 }
-
-
-//O código acima usa as funções `FindFirstFile`, `FindNextFile` e `FindClose` da WinAPI para listar os conteúdos das pastas.
-//A função `ListFolderContents` é chamada recursivamente para listar as pastas e arquivos de todas as subpastas.
-
-//Agora, você pode usar o método `ListFoldersAndFiles` desta classe para listar todas as pastas e arquivos do disco C: da seguinte maneira:
-
-//```csharp
-//string path = @"C:\";
-//var rootFolder = FileManager.ListFoldersAndFiles(path);
