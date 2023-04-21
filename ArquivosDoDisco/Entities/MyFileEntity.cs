@@ -6,5 +6,10 @@
         public long Size { get; set; }
         public string Extension { get; set; }
         public string FullPath { get; set; }
+
+        public override string ToString()
+        {
+            return FullPath;
+        }
     }
 }

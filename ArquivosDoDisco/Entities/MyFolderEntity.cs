@@ -14,6 +14,11 @@ namespace ArquivosDoDisco.Entities
         public List<MyFolderEntity> Folders { get; set; }
         public List<MyFileEntity> Files { get; set; }
 
+        public override string ToString()
+        {
+            return $"files: {Files.Count:000} Folders: {Folders.Count:000} {FullPath}";
+        }
+
         public void SortFilesBySize()
         {
             Files.Sort((file1, file2) => file1.Size.CompareTo(file2.Size));
