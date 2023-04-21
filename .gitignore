@@ -5,6 +5,9 @@ project.lock.json
 *.pyc
 nupkg/
 
+# Solution Detritus
+structure.json
+
 # Visual Studio Code
 .vscode
 

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using ArquivosDoDisco.Entities;
 using ArquivosDoDisco.UseCase;
+using System.Reflection;
 
 class Program
 {
@@ -9,7 +10,11 @@ class Program
         string driveC = TakeAllDrives();
 
         MyFolderEntity structure = ReadStructure(driveC);
-        ShowStructure(structure);
+        
+        SaveStructureAsJson(structure);
+
+        //ShowStructure(structure);
+
         ShowTotalSizePerExtension(structure);
 
         string folderToFindPath = @"ArquivosDoDisco";
@@ -33,6 +38,17 @@ class Program
 
         return physicalDrives.First().Name;
     }
+
+    private static void SaveStructureAsJson(MyFolderEntity structure)
+    {
+        //var solutionFolderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        //var jsonFilePath = Path.Combine(solutionFolderPath, "structure.json");
+        const string jsonFilePath = "C:\\Users\\Albert\\OneDrive\\Git\\AlbertKellner\\GeminiClone\\structure.json";
+
+        var json = JsonConvert.SerializeObject(structure, Formatting.Indented);
+        File.WriteAllText(jsonFilePath, json);
+    }
+
 
     private static void ShowFoundFolder(MyFolderEntity foundFolder)
     {
