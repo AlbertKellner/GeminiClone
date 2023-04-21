@@ -6,19 +6,32 @@ class Program
 {
     static void Main(string[] args)
     {
-        string path = @"C:\Arquivos Pessoais\Git\Albert\ArquivosDoDisco";
-        //string path = @"C:\";
+        string driveC = TakeAllDrives();
 
-        MyFolderEntity structure = ReadStructure(path);
+        MyFolderEntity structure = ReadStructure(driveC);
         ShowStructure(structure);
         ShowTotalSizePerExtension(structure);
 
-        string folderToFindPath = @"ArquivosDoDisco\ArquivosDoDisco";
+        string folderToFindPath = @"ArquivosDoDisco";
 
         MyFolderEntity foundFolder = FindFolder(structure, folderToFindPath);
         ShowFoundFolder(foundFolder);
 
         Console.ReadKey();
+    }
+
+    private static string TakeAllDrives()
+    {
+        var drives = DriveInfo.GetDrives();
+
+        var physicalDrives = drives.Where(d => d.DriveType == DriveType.Fixed);
+
+        foreach (var drive in physicalDrives)
+        {
+            Console.WriteLine($"Drive: {drive.Name}, Type: {drive.DriveType}, Size: {drive.TotalSize}");
+        }
+
+        return physicalDrives.First().Name;
     }
 
     private static void ShowFoundFolder(MyFolderEntity foundFolder)

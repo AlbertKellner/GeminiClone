@@ -1,64 +1,107 @@
-﻿using ArquivosDoDisco.Entities;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+using ArquivosDoDisco.Entities;
+using ArquivosDoDisco.UseCase;
 
 namespace ArquivosDoDisco.UseCase
 {
     public static class FileManager
     {
-        public static MyFolderEntity ListFoldersAndFiles(string path)
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern IntPtr FindFirstFile(string lpFileName, out WIN32_FIND_DATA lpFindFileData);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool FindClose(IntPtr hFindFile);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct WIN32_FIND_DATA
         {
-            var dirInfo = new DirectoryInfo(path);
-            return CreateStructure(dirInfo);
+            public uint dwFileAttributes;
+            public System.Runtime.InteropServices.ComTypes.FILETIME ftCreationTime;
+            public System.Runtime.InteropServices.ComTypes.FILETIME ftLastAccessTime;
+            public System.Runtime.InteropServices.ComTypes.FILETIME ftLastWriteTime;
+            public uint nFileSizeHigh;
+            public uint nFileSizeLow;
+            public uint dwReserved0;
+            public uint dwReserved1;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string cFileName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
+            public string cAlternateFileName;
         }
 
-        private static MyFolderEntity CreateStructure(DirectoryInfo dirInfo)
+        public static MyFolderEntity ListFoldersAndFiles(string path)
         {
-            var folder = new MyFolderEntity
+            var rootFolder = new MyFolderEntity
             {
-                Name = dirInfo.Name,
-                FullPath = dirInfo.FullName,
+                Name = "root",
+                FullPath = path,
                 Files = new List<MyFileEntity>(),
                 Folders = new List<MyFolderEntity>()
             };
 
-            try
-            {
-                AddFilesToFolder(dirInfo, folder);
-                AddSubFoldersToFolder(dirInfo, folder);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                Console.WriteLine($"Acesso negado à pasta: {dirInfo.FullName}");
-            }
+            ListFolderContents(rootFolder);
 
-            return folder;
+            return rootFolder;
         }
 
-
-        private static void AddFilesToFolder(DirectoryInfo dirInfo, MyFolderEntity folder)
+        private static void ListFolderContents(MyFolderEntity folder)
         {
-            foreach (var fileInfo in dirInfo.GetFiles())
+            WIN32_FIND_DATA findData;
+            IntPtr findHandle = FindFirstFile(Path.Combine(folder.FullPath, "*"), out findData);
+
+            if (findHandle != IntPtr.Zero)
             {
-                var file = new MyFileEntity
+                do
                 {
-                    Name = fileInfo.Name,
-                    Size = fileInfo.Length,
-                    Extension = fileInfo.Extension,
-                    FullPath = fileInfo.FullName
-                };
+                    if (findData.cFileName == "." || findData.cFileName == "..") continue;
 
-                folder.Files.Add(file);
-                folder.TotalSize += file.Size;
-            }
-        }
+                    if ((findData.dwFileAttributes & 0x10) == 0x10) // Diretório
+                    {
+                        var subFolder = new MyFolderEntity
+                        {
+                            Name = findData.cFileName,
+                            FullPath = Path.Combine(folder.FullPath, findData.cFileName),
+                            Files = new List<MyFileEntity>(),
+                            Folders = new List<MyFolderEntity>()
+                        };
 
-        public static void AddSubFoldersToFolder(DirectoryInfo dirInfo, MyFolderEntity folder)
-        {
-            foreach (var subFolderInfo in dirInfo.GetDirectories())
-            {
-                var subFolder = CreateStructure(subFolderInfo);
-                folder.Folders.Add(subFolder);
-                folder.TotalSize += subFolder.TotalSize;
+                        folder.Folders.Add(subFolder);
+                        ListFolderContents(subFolder);
+                    }
+                    else // Arquivo
+                    {
+                        long fileSize = ((long)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
+
+                        var file = new MyFileEntity
+                        {
+                            Name = findData.cFileName,
+                            Size = fileSize,
+                            Extension = Path.GetExtension(findData.cFileName),
+                            FullPath = Path.Combine(folder.FullPath, findData.cFileName)
+                        };
+                        folder.Files.Add(file);
+                    }
+                }
+                while (FindNextFile(findHandle, out findData));
+
+                FindClose(findHandle);
             }
         }
     }
 }
+
+
+//O código acima usa as funções `FindFirstFile`, `FindNextFile` e `FindClose` da WinAPI para listar os conteúdos das pastas.
+//A função `ListFolderContents` é chamada recursivamente para listar as pastas e arquivos de todas as subpastas.
+
+//Agora, você pode usar o método `ListFoldersAndFiles` desta classe para listar todas as pastas e arquivos do disco C: da seguinte maneira:
+
+//```csharp
+//string path = @"C:\";
+//var rootFolder = FileManager.ListFoldersAndFiles(path);
