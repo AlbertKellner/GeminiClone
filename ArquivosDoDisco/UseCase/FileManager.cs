@@ -31,7 +31,7 @@ namespace ArquivosDoDisco.UseCase
             public string cAlternateFileName;
         }
 
-        public static MyFolderEntity ListFoldersAndFiles(string path)
+        public static async Task<MyFolderEntity> ListFoldersAndFilesAsync(string path)
         {
             var rootFolder = new MyFolderEntity
             {
@@ -41,12 +41,12 @@ namespace ArquivosDoDisco.UseCase
                 Folders = new List<MyFolderEntity>()
             };
 
-            ListFolderContents(rootFolder);
+            await ListFolderContentsAsync(rootFolder);
 
             return rootFolder;
         }
 
-        private static void ListFolderContents(MyFolderEntity folder)
+        private static async Task ListFolderContentsAsync(MyFolderEntity folder)
         {
             WIN32_FIND_DATA findData;
             IntPtr findHandle = FindFirstFile(Path.Combine(folder.FullPath, "*"), out findData);
@@ -72,7 +72,7 @@ namespace ArquivosDoDisco.UseCase
                         folder.Folders.Add(subFolder);
 
                         // Utiliza Task.Run para processar a pasta de forma assíncrona
-                        tasks.Add(Task.Run(() => ListFolderContents(subFolder)));
+                        tasks.Add(Task.Run(async () => await ListFolderContentsAsync(subFolder)));
                     }
                     else // Arquivo
                     {
@@ -93,9 +93,8 @@ namespace ArquivosDoDisco.UseCase
                 FindClose(findHandle);
 
                 // Aguarda a conclusão de todas as tasks antes de retornar
-                Task.WaitAll(tasks.ToArray());
+                await Task.WhenAll(tasks.ToArray());
             }
         }
-
     }
 }

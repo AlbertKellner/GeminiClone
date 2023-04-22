@@ -6,22 +6,23 @@ using System.Xml.Linq;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         string driveToScan = GetDrive();
 
-        MyFolderEntity structure = ReadStructure(driveToScan);
+        MyFolderEntity structure = await FileManager.ListFoldersAndFilesAsync(driveToScan);
 
-        //SaveStructureAsJson(structure);
+        SaveStructureAsJson(structure);
 
-        string folderToFindPath = @"Microsoft Visual Studio\2022\Community\Common7\IDE\1033";
+        //string folderToFindPath = @"Microsoft Visual Studio\2022\Community\Common7\IDE\1033";
+        //string folderToFindPath = @"Teste";
 
-        MyFolderEntity foundFolder = FindFolder(structure, folderToFindPath);
+        //MyFolderEntity foundFolder = FindFolder(structure, folderToFindPath);
 
-        SaveStructureAsJson(foundFolder);
+        //SaveStructureAsJson(foundFolder);
         //ShowFoundFolder(foundFolder);
 
-        Console.ReadKey();
+        //Console.ReadKey();
     }
 
     private static string GetDrive()
@@ -35,7 +36,7 @@ class Program
             Console.WriteLine($"Drive: {drive.Name}, Type: {drive.DriveType}, VolumeLabel: {drive.VolumeLabel}, Size: {drive.TotalSize}");
         }
 
-        string driveName = drives.First(x => x.Name == "E:\\").Name;
+        string driveName = drives.First(x => x.Name == "C:\\").Name;
 
         Console.Write($"Unidade selecionada: {driveName}");
 
@@ -51,27 +52,11 @@ class Program
         File.WriteAllText(jsonFilePath, json);
     }
 
-    private static void ShowFoundFolder(MyFolderEntity foundFolder)
-    {
-        if (foundFolder != null)
-        {
-            Console.WriteLine($"\n\nEstrutura em JSON:\n{JsonConvert.SerializeObject(foundFolder, Formatting.Indented)}");
-        }
-        else
-        {
-            Console.WriteLine("Folder not found");
-        }
-    }
-
     private static MyFolderEntity FindFolder(MyFolderEntity structure, string folderToFindPath)
     {
         string[] pathSegments = folderToFindPath.Split(Path.DirectorySeparatorChar);
         MyFolderEntity foundFolder = structure.FindFolder(pathSegments);
 
         return foundFolder;
-    }
-    private static MyFolderEntity ReadStructure(string path)
-    {
-        return FileManager.ListFoldersAndFiles(path);
     }
 }
