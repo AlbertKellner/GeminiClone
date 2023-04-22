@@ -2,53 +2,54 @@
 using ArquivosDoDisco.Entities;
 using ArquivosDoDisco.UseCase;
 using System.Reflection;
+using System.Xml.Linq;
 
 class Program
 {
     static void Main(string[] args)
     {
-        string driveC = TakeAllDrives();
+        string driveToScan = GetDrive();
 
-        MyFolderEntity structure = ReadStructure(driveC);
-        
-        SaveStructureAsJson(structure);
+        MyFolderEntity structure = ReadStructure(driveToScan);
 
-        //ShowStructure(structure);
+        //SaveStructureAsJson(structure);
 
-        ShowTotalSizePerExtension(structure);
-
-        string folderToFindPath = @"ArquivosDoDisco";
+        string folderToFindPath = @"Microsoft Visual Studio\2022\Community\Common7\IDE\1033";
 
         MyFolderEntity foundFolder = FindFolder(structure, folderToFindPath);
-        ShowFoundFolder(foundFolder);
+
+        SaveStructureAsJson(foundFolder);
+        //ShowFoundFolder(foundFolder);
 
         Console.ReadKey();
     }
 
-    private static string TakeAllDrives()
+    private static string GetDrive()
     {
         var drives = DriveInfo.GetDrives();
 
-        var physicalDrives = drives.Where(d => d.DriveType == DriveType.Fixed);
+        //var physicalDrives = drives.Where(d => d.DriveType == DriveType.Fixed);
 
-        foreach (var drive in physicalDrives)
+        foreach (var drive in drives)
         {
-            Console.WriteLine($"Drive: {drive.Name}, Type: {drive.DriveType}, Size: {drive.TotalSize}");
+            Console.WriteLine($"Drive: {drive.Name}, Type: {drive.DriveType}, VolumeLabel: {drive.VolumeLabel}, Size: {drive.TotalSize}");
         }
 
-        return physicalDrives.First().Name;
+        string driveName = drives.First(x => x.Name == "E:\\").Name;
+
+        Console.Write($"Unidade selecionada: {driveName}");
+
+        return driveName;
     }
 
     private static void SaveStructureAsJson(MyFolderEntity structure)
     {
-        //var solutionFolderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        //var jsonFilePath = Path.Combine(solutionFolderPath, "structure.json");
         const string jsonFilePath = "C:\\Users\\Albert\\OneDrive\\Git\\AlbertKellner\\GeminiClone\\structure.json";
 
         var json = JsonConvert.SerializeObject(structure, Formatting.Indented);
+
         File.WriteAllText(jsonFilePath, json);
     }
-
 
     private static void ShowFoundFolder(MyFolderEntity foundFolder)
     {
@@ -69,27 +70,8 @@ class Program
 
         return foundFolder;
     }
-
-    private static void ShowStructure(MyFolderEntity structure)
-    {
-        Console.WriteLine($"\n\nEstrutura em JSON:\n{JsonConvert.SerializeObject(structure, Formatting.Indented)}");
-    }
-
     private static MyFolderEntity ReadStructure(string path)
     {
-        MyFolderEntity myFolderEntity = FileManager.ListFoldersAndFiles(path);
-        
-        //myFolderEntity.SortFilesBySize();
-        //myFolderEntity.SortFoldersBySize();
-        //myFolderEntity.SortFilesByExtension();
-
-        return myFolderEntity;
-
-    }
-
-    private static void ShowTotalSizePerExtension(MyFolderEntity structure)
-    {
-        List<ExtensionSummaryEntity> totalSizePerExtension = structure.GetTotalSizePerExtension();
-        Console.WriteLine($"\n\nGetTotalSizePerExtension:\n{JsonConvert.SerializeObject(totalSizePerExtension, Formatting.Indented)}");
+        return FileManager.ListFoldersAndFiles(path);
     }
 }
