@@ -10,9 +10,24 @@ namespace ArquivosDoDisco.Entities
     {
         public string Name { get; set; }
         public string FullPath { get; set; }
-        public long TotalSize { get; set; }
+        public long TotalSize
+        {
+            get
+            {
+                return CalculateTotalSize();
+            }
+        }
         public List<MyFolderEntity> Folders { get; set; }
         public List<MyFileEntity> Files { get; set; }
+
+        private long CalculateTotalSize()
+        {
+            long folderSize = Files.Sum(file => file.Size);
+            long subFoldersSize = Folders.Sum(folder => folder.TotalSize);
+
+            return folderSize + subFoldersSize;
+        }
+
 
         public override string ToString()
         {
