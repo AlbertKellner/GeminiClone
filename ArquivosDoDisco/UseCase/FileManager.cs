@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using ArquivosDoDisco.Entities;
+using Microsoft.Extensions.ObjectPool;
 
 namespace ArquivosDoDisco.UseCase
 {
@@ -31,6 +32,8 @@ namespace ArquivosDoDisco.UseCase
             public string cAlternateFileName;
         }
 
+        private static readonly ObjectPool<MyFolderEntity> FolderPool = new DefaultObjectPool<MyFolderEntity>(new DefaultPooledObjectPolicy<MyFolderEntity>());
+
         public static async Task<MyFolderEntity> ListFoldersAndFilesAsync(string path)
         {
             var rootFolder = new MyFolderEntity
@@ -61,31 +64,11 @@ namespace ArquivosDoDisco.UseCase
 
                     if ((findData.dwFileAttributes & 0x10) == 0x10) // Diretório
                     {
-                        var subFolder = new MyFolderEntity
-                        {
-                            Name = findData.cFileName,
-                            FullPath = Path.Combine(folder.FullPath, findData.cFileName),
-                            Files = new List<MyFileEntity>(),
-                            Folders = new List<MyFolderEntity>()
-                        };
-
-                        folder.Folders.Add(subFolder);
-
-                        // Utiliza Task.Run para processar a pasta de forma assíncrona
-                        tasks.Add(Task.Run(async () => await ListFolderContentsAsync(subFolder)));
+                        TakeFolders(folder, findData, tasks);
                     }
                     else // Arquivo
                     {
-                        long fileSize = ((long)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
-
-                        var file = new MyFileEntity
-                        {
-                            Name = findData.cFileName,
-                            Size = fileSize,
-                            Extension = Path.GetExtension(findData.cFileName),
-                            FullPath = Path.Combine(folder.FullPath, findData.cFileName)
-                        };
-                        folder.Files.Add(file);
+                        TakeFiles(folder, findData);
                     }
                 }
                 while (FindNextFile(findHandle, out findData));
@@ -95,6 +78,40 @@ namespace ArquivosDoDisco.UseCase
                 // Aguarda a conclusão de todas as tasks antes de retornar
                 await Task.WhenAll(tasks.ToArray());
             }
+        }
+
+        private static void TakeFolders(MyFolderEntity folder, WIN32_FIND_DATA findData, List<Task> tasks)
+        {
+            var subFolder = new MyFolderEntity
+            {
+                Name = findData.cFileName,
+                FullPath = Path.Combine(folder.FullPath, findData.cFileName),
+                Files = new List<MyFileEntity>(),
+                Folders = new List<MyFolderEntity>()
+            };
+
+            folder.Folders.Add(subFolder);
+
+            tasks.Add(Task.Run(async () =>
+            {
+                await ListFolderContentsAsync(subFolder);
+                FolderPool.Return(subFolder);
+            }));
+        }
+
+
+        private static void TakeFiles(MyFolderEntity folder, WIN32_FIND_DATA findData)
+        {
+            long fileSize = ((long)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
+
+            var file = new MyFileEntity
+            {
+                Name = findData.cFileName,
+                Size = fileSize,
+                Extension = Path.GetExtension(findData.cFileName),
+                FullPath = Path.Combine(folder.FullPath, findData.cFileName)
+            };
+            folder.Files.Add(file);
         }
     }
 }
