@@ -1,2 +1,2 @@
 # GeminiClone
-Código criado 100% por Chat-GPT 4
+Código criado por Chat-GPT 4
