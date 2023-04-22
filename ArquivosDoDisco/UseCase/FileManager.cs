@@ -46,6 +46,9 @@ namespace ArquivosDoDisco.UseCase
 
             await ListFolderContentsAsync(rootFolder);
 
+            rootFolder.SortFoldersBySize();
+            rootFolder.SortFilesBySize();
+
             return rootFolder;
         }
 
