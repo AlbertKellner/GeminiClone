@@ -1,4 +1,5 @@
-﻿using LiveCharts.Wpf;
+﻿using System.Diagnostics; // Add this line at the top of your code
+using LiveCharts.Wpf;
 using ArquivosDoDisco.UseCase;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,7 +13,8 @@ namespace DesktopApp
 {
     public partial class MainWindow : Window
     {
-        public MyFolderEntity structure = new MyFolderEntity();
+        public MyFolderEntity structure = new();
+        public string CurrentDrive = string.Empty;
         string CurrentPath = "";
 
         public MainWindow()
@@ -40,6 +42,7 @@ namespace DesktopApp
         {
             var label = sender as Label;
             var content = label.Content as string;
+            CurrentDrive = label.Content as string;
 
             structure = await FileManager.ListFoldersAndFilesAsync(content);
             CurrentPath = "";
@@ -62,6 +65,9 @@ namespace DesktopApp
 
         private void fillGraph(MyFolderEntity folderData)
         {
+            // Update the label with the folder's full path
+            PathLabel.Content = folderData.FullPath;
+
             // Update pie chart with folder and file data
             var seriesCollection = new SeriesCollection();
 
@@ -81,5 +87,14 @@ namespace DesktopApp
 
             PieChart.Series = seriesCollection;
         }
+
+        private void PathLabel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(System.IO.Path.Combine(CurrentDrive, CurrentPath)))
+            {
+                Process.Start("explorer.exe", System.IO.Path.Combine(CurrentDrive, CurrentPath));
+            }
+        }
+
     }
 }

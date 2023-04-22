@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Height="50" Background="LightGray">
-            <Label Content="Título" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Label x:Name="PathLabel" Content="" FontSize="30" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" MouseLeftButtonDown="PathLabel_MouseLeftButtonDown" Cursor="Hand"/>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -27,7 +27,7 @@
 
             <lvc:PieChart Grid.Column="1" Name="PieChart" Margin="20" DataClick="PieChart_DataClick">
                 <lvc:PieChart.Series>
-                    <lvc:PieSeries Title="Series 1" Values="1" DataLabels="True" />
+                    <lvc:PieSeries Title="" Values="" DataLabels="True" />
                 </lvc:PieChart.Series>
                 
             </lvc:PieChart>
