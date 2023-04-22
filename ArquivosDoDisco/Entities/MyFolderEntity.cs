@@ -36,12 +36,19 @@ namespace ArquivosDoDisco.Entities
 
         public void SortFilesBySize()
         {
-            Files.Sort((file1, file2) => file1.Size.CompareTo(file2.Size));
+            if (Files != null)
+            {
+                Files.Sort((file1, file2) => file2.Size.CompareTo(file1.Size));
+            }
         }
+
 
         public void SortFoldersBySize()
         {
-            Folders.Sort((folder1, folder2) => folder1.TotalSize.CompareTo(folder2.TotalSize));
+            if (Folders != null)
+            {
+                Folders.Sort((folder1, folder2) => folder2.TotalSize.CompareTo(folder1.TotalSize));
+            }
         }
 
         public void SortFilesByExtension()

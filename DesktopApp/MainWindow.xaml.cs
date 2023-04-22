@@ -42,6 +42,7 @@ namespace DesktopApp
             var content = label.Content as string;
 
             structure = await FileManager.ListFoldersAndFilesAsync(content);
+            CurrentPath = "";
 
             fillGraph(structure);
         }
@@ -61,13 +62,21 @@ namespace DesktopApp
 
         private void fillGraph(MyFolderEntity folderData)
         {
-            // Update pie chart with folder data
+            // Update pie chart with folder and file data
             var seriesCollection = new SeriesCollection();
 
+            // Add series for folders
             foreach (var folder in folderData.Folders)
             {
                 var values = new ChartValues<ObservableValue> { new ObservableValue(folder.TotalSize) };
                 seriesCollection.Add(new PieSeries { Title = folder.Name, Values = values, DataLabels = true });
+            }
+
+            // Add series for files
+            foreach (var file in folderData.Files)
+            {
+                var values = new ChartValues<ObservableValue> { new ObservableValue(file.Size) };
+                seriesCollection.Add(new PieSeries { Title = file.Name, Values = values, DataLabels = true });
             }
 
             PieChart.Series = seriesCollection;
