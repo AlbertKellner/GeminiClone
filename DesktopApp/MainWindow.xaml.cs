@@ -44,9 +44,10 @@ namespace DesktopApp
             var content = label.Content as string;
             CurrentDrive = label.Content as string;
 
+            PieChart.Series = new SeriesCollection();
             structure = await FileManager.ListFoldersAndFilesAsync(content);
             CurrentPath = "";
-
+            
             fillGraph(structure);
         }
 
@@ -56,10 +57,11 @@ namespace DesktopApp
 
             CurrentPath =  System.IO.Path.Combine(CurrentPath, selectedSeries.Title);
 
+            PieChart.Series = new SeriesCollection();
             var foundFolder = DriverFind.FindFolder(structure, CurrentPath);
             foundFolder.SortFoldersBySize();
             foundFolder.SortFilesBySize();
-
+            
             fillGraph(foundFolder);
         }
 
