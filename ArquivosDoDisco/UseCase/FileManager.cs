@@ -32,27 +32,28 @@ namespace ArquivosDoDisco.UseCase
             public string cAlternateFileName;
         }
 
-        private static readonly ObjectPool<MyFolderEntity> FolderPool = new DefaultObjectPool<MyFolderEntity>(new DefaultPooledObjectPolicy<MyFolderEntity>());
+        private static readonly ObjectPool<MyDiskItemEntity> FolderPool = new DefaultObjectPool<MyDiskItemEntity>(new DefaultPooledObjectPolicy<MyDiskItemEntity>());
 
-        public static async Task<MyFolderEntity> ListFoldersAndFilesAsync(string path)
+        public static async Task<MyDiskItemEntity> ListFoldersAndFilesAsync(string path)
         {
-            var rootFolder = new MyFolderEntity
+            var rootFolder = new MyDiskItemEntity
             {
                 Name = "root",
                 FullPath = path,
-                Files = new List<MyFileEntity>(),
-                Folders = new List<MyFolderEntity>()
+                Children = new List<MyDiskItemEntity>()
             };
 
             await ListFolderContentsAsync(rootFolder);
 
-            rootFolder.SortFoldersBySize();
-            rootFolder.SortFilesBySize();
+            rootFolder.SortChildrenBySize();
+
+            DriverFind.SaveStructureAsJson(rootFolder);
 
             return rootFolder;
         }
 
-        private static async Task ListFolderContentsAsync(MyFolderEntity folder)
+
+        private static async Task ListFolderContentsAsync(MyDiskItemEntity folder)
         {
             WIN32_FIND_DATA findData;
             IntPtr findHandle = FindFirstFile(Path.Combine(folder.FullPath, "*"), out findData);
@@ -78,22 +79,23 @@ namespace ArquivosDoDisco.UseCase
 
                 FindClose(findHandle);
 
-                // Aguarda a conclusão de todas as tasks antes de retornar
                 await Task.WhenAll(tasks.ToArray());
+
+                folder.UpdateFolderSize();
             }
         }
 
-        private static void TakeFolders(MyFolderEntity folder, WIN32_FIND_DATA findData, List<Task> tasks)
+
+        private static void TakeFolders(MyDiskItemEntity folder, WIN32_FIND_DATA findData, List<Task> tasks)
         {
-            var subFolder = new MyFolderEntity
+            var subFolder = new MyDiskItemEntity
             {
                 Name = findData.cFileName,
                 FullPath = Path.Combine(folder.FullPath, findData.cFileName),
-                Files = new List<MyFileEntity>(),
-                Folders = new List<MyFolderEntity>()
+                Children = new List<MyDiskItemEntity>()
             };
 
-            folder.Folders.Add(subFolder);
+            folder.Children.Add(subFolder);
 
             tasks.Add(Task.Run(async () =>
             {
@@ -102,19 +104,19 @@ namespace ArquivosDoDisco.UseCase
             }));
         }
 
-
-        private static void TakeFiles(MyFolderEntity folder, WIN32_FIND_DATA findData)
+        private static void TakeFiles(MyDiskItemEntity folder, WIN32_FIND_DATA findData)
         {
             long fileSize = ((long)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
 
-            var file = new MyFileEntity
+            var file = new MyDiskItemEntity
             {
                 Name = findData.cFileName,
                 Size = fileSize,
                 Extension = Path.GetExtension(findData.cFileName),
                 FullPath = Path.Combine(folder.FullPath, findData.cFileName)
             };
-            folder.Files.Add(file);
+            folder.Children.Add(file);
         }
+
     }
 }

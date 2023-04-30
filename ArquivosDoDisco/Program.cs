@@ -10,7 +10,7 @@ class Program
     {
         string driveToScan = DriverFind.GetDrive();
 
-        MyFolderEntity structure = await FileManager.ListFoldersAndFilesAsync(driveToScan);
+        MyDiskItemEntity structure = await FileManager.ListFoldersAndFilesAsync(driveToScan);
 
         DriverFind.SaveStructureAsJson(structure);
 

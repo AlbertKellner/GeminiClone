@@ -1,7 +1,9 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text.Json;
 using ArquivosDoDisco.Entities;
 using Microsoft.Extensions.ObjectPool;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ArquivosDoDisco.UseCase
 {
@@ -40,19 +42,33 @@ namespace ArquivosDoDisco.UseCase
             return driveName;
         }
 
-        public static void SaveStructureAsJson(MyFolderEntity structure)
+        public static void SaveStructureAsJson(MyDiskItemEntity structure)
         {
             const string jsonFilePath = "C:\\Users\\Albert\\OneDrive\\Git\\AlbertKellner\\GeminiClone\\structure.json";
+            string json = ConvertToJson(structure);
 
-            var json = JsonConvert.SerializeObject(structure, Formatting.Indented);
+            //var json = JsonConvert.SerializeObject(structure, Formatting.Indented);
 
             File.WriteAllText(jsonFilePath, json);
         }
 
-        public static MyFolderEntity FindFolder(MyFolderEntity structure, string folderToFindPath)
+        public static string ConvertToJson(MyDiskItemEntity structure)
+        {
+            var options = new JsonSerializerOptions
+            {
+                IncludeFields = true,
+                PropertyNameCaseInsensitive = true,
+                //MaxDepth = 2,
+            };
+            var json = JsonSerializer.Serialize(structure, options);
+
+            return json;
+        }
+
+        public static MyDiskItemEntity FindFolder(MyDiskItemEntity structure, string folderToFindPath)
         {
             string[] pathSegments = folderToFindPath.Split(Path.DirectorySeparatorChar);
-            MyFolderEntity foundFolder = structure.FindFolder(pathSegments);
+            MyDiskItemEntity foundFolder = structure.FindFolder(pathSegments);
 
             return foundFolder;
         }
