@@ -1,0 +1,321 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ArquivosDoDisco.Web</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ArquivosDoDisco.Web.styles.css" asp-append-version="true" />
+    <style type="stylesheet">
+        .crumbs {
+            width: 100%;
+            height: 50px;
+            font: 16px Montserrat, sans-serif;
+            align-self: flex-start;
+            background: lightgrey;
+        }
+
+        .crumbs .crumb {
+            position: relative;
+            display: inline-block;
+            padding: 1em;
+        }
+
+        .crumbs .crumb:not(:last-of-type)::before {
+            content: "";
+            display: block;
+            position: absolute;
+            border-top: 5px solid transparent;
+            border-left: 10px solid #658ed0;
+            border-bottom: 5px solid transparent;
+            top: 21px;
+            right: -5px;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            background: whitesmoke;
+        }
+
+        .container .chart {
+            width: 700px;
+            height: 700px;
+            align-self: center;
+        }
+
+        /* SVG Elements styling */
+        svg text {
+            text-anchor: middle;
+        }
+
+        .ark {
+            fill-rule: evenodd;
+            cursor: pointer;
+        }
+
+        .ark.-depth-0 {
+            fill: white;
+        }
+    </style>
+
+
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-page="/Index">ArquivosDoDisco.Web</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                @*<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                        </li>
+                    </ul>
+                </div>*@
+                @RenderBody()
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between crumbs">
+                  <!-- Crumbs dynamically appended -->
+                </div>
+            </div>
+        </nav>
+    </header>
+    @*<div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>*@
+    <form>
+        <label for="getDisks">GetDisks:</label>
+        <select id="getDisks" onchange="getStructure(this.value);">
+            <!-- Dropdown options will be populated with JavaScript -->
+        </select>
+    </form>
+    <div class="container">
+      <div class="chart"></div>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2023 - ArquivosDoDisco.Web
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/22878/d3.min.js"></script>
+
+    <script>
+        function fetchDisks() {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var disks = JSON.parse(xhr.responseText);
+                    populateDropdown(disks);
+                }
+            };
+            xhr.open("GET", "https://localhost:7142/api/Structure", true);
+            xhr.send();
+        }
+
+        // JavaScript function to populate the dropdown with the fetched data
+        function populateDropdown(disks) {
+            var dropdown = document.getElementById("getDisks");
+
+            var option = document.createElement("option");
+            option.value = "";
+            option.text = "";
+            dropdown.add(option);
+
+            for (var i = 0; i < disks.length; i++) {
+                var option = document.createElement("option");
+                option.value = disks[i];
+                option.text = disks[i];
+                dropdown.add(option);
+            }
+        }
+
+        fetchDisks();
+
+        function getStructure(selectedDrive) {
+            document.querySelector(".chart").innerHTML = "Loading...";
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    console.log(data);
+                    generateGraph(data);
+                }
+            };
+            xhr.open("GET", "https://localhost:7142/api/structure/" + selectedDrive, true);
+            xhr.send();
+        }
+
+        function generateGraph(data) {
+            document.querySelector(".chart").innerHTML = "";
+            // Size/state related variables
+            var width = 700,
+                height = 700,
+                outer_radius = width/2.5,
+                arc_transition; // save current arc transition
+
+            // Create scales
+            var x = d3.scale.linear()
+                  .range([0, 2 * Math.PI]),
+    
+                y = d3.scale.sqrt()
+                  .range([0, width/2]),
+    
+                color = d3.scale.category20c();
+
+            // Partition layout
+            var partition = d3.layout.partition(),
+                nodes = partition.nodes(data);
+
+            // Arc generator
+            var arc_generator = d3.svg.arc()
+                  .startAngle(function(d) { 
+                    return Math.max(0, Math.min(2 * Math.PI, x(d.x))); 
+                  })
+                  .endAngle(function(d) { 
+                    return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); 
+                  })
+                  .innerRadius(function(d) { 
+                    return Math.max(0, y(d.y)); 
+                  })
+                  .outerRadius(function(d) { 
+                    return Math.max(0, y(d.y + d.dy)); 
+                  });
+
+
+
+            // Append a centered group for the burst to be added to
+            var burst_group = d3.select('.chart')
+                               .append('svg')
+                               .attr({
+                                 width: width,
+                                 height: height
+                               })
+                               .append('g')
+                               .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')');
+
+            // Append Arcs
+            var arcs = burst_group.selectAll("path.ark")
+                .data( nodes )
+                .enter().append("path")
+                .attr({
+                  d: arc_generator,
+                  class: function(d) { return 'ark -depth-' + d.depth; }
+                })
+                .style("fill", function(d,i) { 
+                  if (d.depth > 0) return color(i); 
+                })
+                .on("click", click)
+                .on('mouseover', function(d) {
+                  if (d.depth > 0) {
+                    var names = getNameArray(d);
+                    fade(arcs, 0.1, names, 'name'); 
+                    update_crumbs(d);
+                  }
+                })
+                .on('mouseout', function(d) {
+                  fade(arcs, 1);
+                  remove_crumbs();
+                });
+
+            // Updates breadcrumbs
+            function update_crumbs(d) {
+              var crumb_container = d3.select('.crumbs'),
+                  sections = getNameArray(d);
+  
+              // Remove existing crumbs
+              remove_crumbs();
+  
+              // Append new crumbs
+              sections.reverse().forEach(function(name) {
+                crumb_container.append('span')
+                  .classed('crumb', true)
+                  .text(name);
+              });
+            };
+
+            // Removes all crumb spans
+            function remove_crumbs() {
+              d3.select('.crumbs').selectAll('.crumb').remove();
+            };
+
+            // Handle Clicks
+            function click(d) {
+              arc_transition = arcs.transition('arc_tween')
+                .duration(750)
+                .attrTween("d", arcTween(d));
+            };
+
+            // Retrieve arc name and parent names
+            function getNameArray(d, array) {
+              array = array || [];
+
+              // Push the current objects name to the array
+              array.push(d.name);
+
+              // Recurse to retrieve parent names
+              if (d.parent) getNameArray(d.parent, array);
+
+              return array;
+            };
+
+            // Interpolate the scales!
+            function arcTween(d) {
+              var xd = d3.interpolate( x.domain(), [d.x, d.x + d.dx] ),
+                  yd = d3.interpolate( y.domain(), [d.y, 1] ),
+                  yr = d3.interpolate( y.range(), [d.y ? 20 : 0, outer_radius] );
+
+              return function(d, i) {
+                return i
+                    ? function(t) { return arc_generator(d); }
+                    : function(t) { 
+                        x.domain( xd(t) ); 
+                        y.domain( yd(t) ).range( yr(t) ); 
+      
+                        return arc_generator(d); 
+                    };
+              };
+            };
+
+            // Fade a selection filtering out the comparator(s)
+            function fade(selection, opacity, comparators, comparatee) {
+              var type = typeof comparators,
+                  key = comparatee ? comparatee : 'value';
+
+              selection.filter(function(d, i) {
+                            // Remove elements based on a string or number
+                            if (type === "string" || type === "number") {
+                              return d[key] !== comparators;
+
+                            // Remove elements based on an array
+                            } else if (type === 'object' && typeof comparators.slice === 'function') {
+                              return comparators.indexOf(d[key]) === -1;
+
+                            // If there is no comparator keep everything 
+                            } else return true;
+                        })
+                        .transition('fade')
+                        .duration(250)
+                        .style('opacity', opacity);
+            };
+        }
+    </script>
+</body>
+</html>

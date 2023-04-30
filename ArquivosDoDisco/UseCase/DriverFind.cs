@@ -1,9 +1,5 @@
-﻿using System.Runtime.InteropServices;
-using System.Text.Json;
+﻿using System.Text.Json;
 using ArquivosDoDisco.Entities;
-using Microsoft.Extensions.ObjectPool;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace ArquivosDoDisco.UseCase
 {
@@ -35,11 +31,24 @@ namespace ArquivosDoDisco.UseCase
                 Console.WriteLine($"Drive: {drive.Name}, Type: {drive.DriveType}, VolumeLabel: {drive.VolumeLabel}, Size: {drive.TotalSize}");
             }
 
-            string driveName = drives.First(x => x.Name == "C:\\").Name;
+            var driveName = drives.First(x => x.Name == "E:\\").Name;
 
-            Console.Write($"Unidade selecionada: {driveName}");
+            //Console.Write($"Unidade selecionada: {driveName}");
 
             return driveName;
+        }
+
+        public static List<string> GetDriveNames()
+        {
+            var drives = DriveInfo.GetDrives();
+            
+            var driveNames = new List<string>();
+            foreach (var drive in drives)
+            {
+                driveNames.Add(drive.Name);
+            }
+
+            return driveNames;
         }
 
         public static void SaveStructureAsJson(MyDiskItemEntity structure)
