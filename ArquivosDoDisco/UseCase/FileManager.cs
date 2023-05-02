@@ -47,7 +47,7 @@ namespace ArquivosDoDisco.UseCase
 
             rootFolder.SortChildrenBySize();
 
-            DriverFind.SaveStructureAsJson(rootFolder);
+            //DriverFind.SaveStructureAsJson(rootFolder);
 
             return rootFolder;
         }

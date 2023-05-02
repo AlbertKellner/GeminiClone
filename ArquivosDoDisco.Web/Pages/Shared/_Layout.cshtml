@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ArquivosDoDisco.Web</title>
+    <title>ArquivosDoDisco.Web</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/ArquivosDoDisco.Web.styles.css" asp-append-version="true" />
     <style type="stylesheet">
         .crumbs {
             width: 100%;
@@ -61,8 +58,6 @@
                 fill: white;
             }
     </style>
-
-
 </head>
 <body>
 
@@ -74,13 +69,7 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                @*<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                <li class="nav-item">
-                <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                </li>
-                </ul>
-                </div>*@
+
                 @RenderBody()
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between crumbs">
                     <!-- Crumbs dynamically appended -->
@@ -88,30 +77,21 @@
             </div>
         </nav>
     </header>
-    @*<div class="container">
-    <main role="main" class="pb-3">
-    @RenderBody()
-    </main>
-    </div>*@
+
     <form>
         <label for="getDisks">GetDisks:</label>
         <select id="getDisks" onchange="getStructure(this.value);">
             <!-- Dropdown options will be populated with JavaScript -->
         </select>
     </form>
+
     <div class="container">
         <div class="chart"></div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2023 - ArquivosDoDisco.Web
-        </div>
-    </footer>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @*<script src="~/lib/jquery/dist/jquery.min.js"></script>*@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    @*<script src="~/js/site.js" asp-append-version="true"></script>*@
     @await RenderSectionAsync("Scripts", required: false)
 
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/22878/d3.min.js"></script>
@@ -199,8 +179,6 @@
                     return Math.max(0, y(d.y + d.dy));
                 });
 
-
-
             // Append a centered group for the burst to be added to
             var burst_group = d3.select('.chart')
                 .append('svg')
@@ -226,7 +204,7 @@
                 .on('mouseover', function (d) {
                     if (d.depth > 0) {
                         var names = getNameArray(d);
-                        fade(arcs, 0.1, names, 'name');
+                        fade(arcs, 0.6, names, 'name');
                         update_crumbs(d);
                     }
                 })
@@ -259,7 +237,7 @@
             // Handle Clicks
             function click(d) {
                 arc_transition = arcs.transition('arc_tween')
-                    .duration(750)
+                    .duration(250) //750
                     .attrTween("d", arcTween(d));
             };
 
@@ -312,7 +290,7 @@
                     } else return true;
                 })
                     .transition('fade')
-                    .duration(250)
+                    .duration(0) //250
                     .style('opacity', opacity);
             };
         }
