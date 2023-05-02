@@ -125,7 +125,7 @@
                     populateDropdown(disks);
                 }
             };
-            xhr.open("GET", "https://localhost:7142/api/Structure", true);
+            xhr.open("GET", "/api/Structure", true);
             xhr.send();
         }
 
@@ -159,7 +159,7 @@
                     generateGraph(data);
                 }
             };
-            xhr.open("GET", "https://localhost:7142/api/structure/" + selectedDrive, true);
+            xhr.open("GET", "/api/structure/" + selectedDrive, true);
             xhr.send();
         }
 
