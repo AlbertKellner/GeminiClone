@@ -43,6 +43,8 @@ namespace ArquivosDoDisco.Web.Controllers
 
             var structure = await FileManager.ListFoldersAndFilesAsync(selectedDrive);
 
+            RemoveNonFoldersRecursively(structure);
+
             if (structure != null)
             {
                 var jsonOptions = new JsonSerializerOptions
@@ -55,6 +57,19 @@ namespace ArquivosDoDisco.Web.Controllers
             else
             {
                 return NoContent();
+            }
+        }
+        private void RemoveNonFoldersRecursively(Entities.MyDiskItemEntity item)
+        {
+            if (item.Children == null)
+            {
+                return;
+            }
+
+            item.Children.RemoveAll(child => !child.IsFolder);
+            foreach (var child in item.Children)
+            {
+                RemoveNonFoldersRecursively(child);
             }
         }
     }
