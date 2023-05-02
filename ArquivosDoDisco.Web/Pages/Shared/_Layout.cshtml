@@ -139,7 +139,7 @@
                     generateGraph(data);
                 }
             };
-            xhr.open("GET", "/api/structure/" + selectedDrive, true);
+            xhr.open("GET", "/api/structure/" + selectedDrive.charAt(0), true);
             xhr.send();
         }
 
@@ -239,6 +239,22 @@
                 arc_transition = arcs.transition('arc_tween')
                     .duration(250) //750
                     .attrTween("d", arcTween(d));
+
+                //console.log(d);
+
+                //var selectedDrive = document.getElementById("getDisks").value.charAt(0);
+
+                //var xhr = new XMLHttpRequest();
+                //xhr.onreadystatechange = function () {
+                //    if (xhr.readyState == 4 && xhr.status == 200) {
+                //        var data = JSON.parse(xhr.responseText);
+                //        console.log(data);
+                //        generateGraph(data);
+                //    }
+                //};
+                //xhr.open("GET", "/api/structure/" + selectedDrive + "/folder/asd", true);
+                //xhr.send();
+
             };
 
             // Retrieve arc name and parent names
