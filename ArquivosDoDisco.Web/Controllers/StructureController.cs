@@ -43,7 +43,7 @@ namespace ArquivosDoDisco.Web.Controllers
             Entities.MyDiskItemEntity structure = await FileManager.ListFoldersAndFilesAsync($"{selectedDrive}:/");
 
             //RemoveNonFoldersRecursively(structure);
-            RemoveFoldersRecursively(structure, 0);
+            //RemoveFoldersRecursively(structure, 0);
 
             if (structure != null)
             {
