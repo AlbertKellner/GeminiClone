@@ -1,6 +1,7 @@
 ﻿using ArquivosDoDisco.Entities;
 using ArquivosDoDisco.UseCase;
 using Microsoft.AspNetCore.Mvc;
+using System.Drawing;
 using System.Net;
 using System.Text.Json;
 
@@ -41,6 +42,8 @@ namespace ArquivosDoDisco.Web.Controllers
             [FromRoute] string selectedDrive)
         {
             Entities.MyDiskItemEntity structure = await FileManager.ListFoldersAndFilesAsync($"{selectedDrive}:/");
+
+
 
             //RemoveNonFoldersRecursively(structure);
             //RemoveFoldersRecursively(structure, 0);
@@ -88,6 +91,26 @@ namespace ArquivosDoDisco.Web.Controllers
             {
                 return NoContent();
             }
+        }
+
+        public static string InterpolateToGrey(string hexColor, double percentage)
+        {
+            if (!double.TryParse(hexColor.Substring(1, 2), System.Globalization.NumberStyles.HexNumber, null, out double r) ||
+                !double.TryParse(hexColor.Substring(3, 2), System.Globalization.NumberStyles.HexNumber, null, out double g) ||
+                !double.TryParse(hexColor.Substring(5, 2), System.Globalization.NumberStyles.HexNumber, null, out double b))
+            {
+                throw new ArgumentException("Invalid color format");
+            }
+
+            double grey = (r + g + b) / 3;
+
+            r = r + (grey - r) * percentage / 100;
+            g = g + (grey - g) * percentage / 100;
+            b = b + (grey - b) * percentage / 100;
+
+            Color interpolatedColor = Color.FromArgb((int)r, (int)g, (int)b);
+
+            return "#" + interpolatedColor.R.ToString("X2") + interpolatedColor.G.ToString("X2") + interpolatedColor.B.ToString("X2");
         }
 
         private void RemoveNonFoldersRecursively(Entities.MyDiskItemEntity item)

@@ -1,6 +1,7 @@
 ﻿<html>
 <head>
-    <script src="https://unpkg.com/sunburst-chart"></script>
+    <script src="//unpkg.com/d3"></script>
+    <script src="//unpkg.com/sunburst-chart"></script>
 </head>
 <body>
     @RenderBody()
@@ -64,13 +65,14 @@
         }
 
         function generateGraph(data) {
-            //myChart = Sunburst();
+            myChart = Sunburst();
 
             //data = {
             //    name: 'root',
             //    value: 900,
+            //    color: "#FFF111",
             //    children: [
-            //        { name: 'child #1', value: 100 },
+            //        { name: 'child #1', value: 100, color: "#FFF555" },
             //        { name: 'child #2', value: 300 },
             //        {
             //            name: 'child #3',
@@ -88,7 +90,33 @@
             
             removeValueIfChildren(data);
 
-            myChart.data(data)(document.getElementById("sunburstChart"));
+            const color = d3.scaleOrdinal(d3.schemePaired);
+
+            myChart
+                .data(data)
+                .label('name')
+                .size('value')
+                .minSliceAngle(.4)
+                .excludeRoot(true)
+                //.maxLevels(6)
+                .showLabels(true)
+                //.centerRadius(.05)
+                //.radiusScaleExponent(.9)
+                .labelOrientation('angular')
+                .onHover((node, event) => console.log(node))
+                //.onClick((node, event) => console.log(node))
+                //.focusOnNode({ name: 'Common7' })
+                //.color('color')
+                //.color((d, parent) => color(parent ? parent.data.name : null))
+                .sort((a, b) => b.value - a.value)
+                .tooltipContent((d, node) => `Size: <i>${node.value}</i>`)
+                //.handleNonFittingLabel((label, availablePx) => {
+                //    const numFitChars = Math.round(availablePx / 7); // ~7px per char
+                //    return numFitChars < 5
+                //        ? null
+                //        : `${label.slice(0, Math.round(numFitChars) - 3)}...`;
+                //})
+                (document.getElementById("sunburstChart"));
         }
 
         function removeValueIfChildren(node) {

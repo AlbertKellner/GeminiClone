@@ -11,6 +11,9 @@ namespace ArquivosDoDisco.Entities
         [JsonInclude]
         [JsonPropertyName("value")]
         public long Size { get; set; }
+        [JsonInclude]
+        [JsonPropertyName("color")]
+        public long Color { get; set; }
         [JsonIgnore]
         public string FullPath { get; set; }
         [JsonIgnore]
