@@ -230,5 +230,93 @@ namespace ArquivosDoDisco.Web.Controllers
             }
         }
 
+
+        public static string Desaturate(string hexColor, double percentage)
+        {
+            Color originalColor = ColorTranslator.FromHtml(hexColor);
+
+            // Converter de RGB para HSL
+            double h, s, l;
+            RgbToHsl(originalColor.R, originalColor.G, originalColor.B, out h, out s, out l);
+
+            // Reduzir a saturação
+            s -= s * (percentage / 100.0);
+
+            // Converter de volta para RGB
+            double r, g, b;
+            HslToRgb(h, s, l, out r, out g, out b);
+
+            Color desaturatedColor = Color.FromArgb((int)r, (int)g, (int)b);
+
+            return "#" + desaturatedColor.R.ToString("X2") + desaturatedColor.G.ToString("X2") + desaturatedColor.B.ToString("X2");
+        }
+
+        private static void RgbToHsl(int r, int g, int b, out double h, out double s, out double l)
+        {
+            double R = r / 255.0;
+            double G = g / 255.0;
+            double B = b / 255.0;
+
+            double max = Math.Max(R, Math.Max(G, B));
+            double min = Math.Min(R, Math.Min(G, B));
+
+            l = (max + min) / 2.0;
+
+            if (max == min)
+            {
+                h = s = 0;
+            }
+            else
+            {
+                double d = max - min;
+                s = l > 0.5 ? d / (2.0 - max - min) : d / (max + min);
+
+                if (max == R)
+                {
+                    h = (G - B) / d + (G < B ? 6 : 0);
+                }
+                else if (max == G)
+                {
+                    h = (B - R) / d + 2;
+                }
+                else
+                {
+                    h = (R - G) / d + 4;
+                }
+
+                h /= 6;
+            }
+        }
+
+        private static void HslToRgb(double h, double s, double l, out double r, out double g, out double b)
+        {
+            if (s == 0)
+            {
+                r = g = b = l;
+            }
+            else
+            {
+                Func<double, double, double, double> hue2rgb = (p, q, t) =>
+                {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1 / 6.0) return p + (q - p) * 6 * t;
+                    if (t < 1 / 2.0) return q;
+                    if (t < 2 / 3.0) return p + (q - p) * (2 / 3.0 - t) * 6;
+                    return p;
+                };
+
+                double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                double p = 2 * l - q;
+
+                r = hue2rgb(p, q, h + 1 / 3.0);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1 / 3.0);
+            }
+
+            r = Math.Round(r * 255);
+            g = Math.Round(g * 255);
+            b = Math.Round(b * 255);
+        }
     }
 }
