@@ -111,7 +111,7 @@ namespace ArquivosDoDisco.Web.Controllers
             foreach (var child in item.Children)
             {
                 // Atribuir a cor base a cada criança e repetir o processo recursivamente
-                AddColorToChildren(child, color, depth + 1);
+                AddColorToChildren(child, item.Color, totalDescendants, depth + 1);  
             }
         }
 
@@ -173,21 +173,19 @@ namespace ArquivosDoDisco.Web.Controllers
             return "#" + interpolatedColor.R.ToString("X2") + interpolatedColor.G.ToString("X2") + interpolatedColor.B.ToString("X2");
         }
 
-        private int CountDescendants(List<Entities.MyDiskItemEntity> items)
+        private int CountDescendants(List<Entities.MyDiskItemEntity> items, int currentDepth = 0)
         {
-            int count = 0;
-
-            if (items != null)
+            if (items == null || !items.Any())
             {
-                foreach (var item in items)
-                {
-                    // Conta este nó e todos os seus descendentes
-                    count += 1 + CountDescendants(item.Children);
-                }
+                return currentDepth;
             }
-
-            return count;
+            else
+            {
+                // Recursivamente obtenha a profundidade de cada item filho e retorne a profundidade máxima
+                return items.Max(item => CountDescendants(item.Children, currentDepth + 1));
+            }
         }
+
 
 
 
