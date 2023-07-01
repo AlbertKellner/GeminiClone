@@ -13,30 +13,54 @@ namespace ArquivosDoDisco.Web.Controllers
     [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
     public class StructureController : Controller
     {
-        private readonly List<string> predefinedColors = new List<string>
-{
-    "#FFCCCC", // Light Red
-    "#CCFFCC", // Light Green
-    "#CCCCFF", // Light Blue
-    "#FFFFCC", // Light Yellow
-    "#FFCCFF", // Light Magenta
-    "#FFDAB9", // Peach Puff
-    "#E6E6FA", // Lavender
-    "#FFF0F5", // Lavender Blush
-    "#D8BFD8", // Thistle
-    "#FFE4E1", // Misty Rose
-    "#FFF5EE", // Seashell
-    "#F0FFF0", // Honeydew
-    "#F5FFFA", // Mint Cream
-    "#F0F8FF", // Alice Blue
-    "#F0E68C", // Khaki
-    "#E6E6FA", // Lavender
-    "#B0E0E6", // Powder Blue
-    "#FAFAD2", // Light Goldenrod Yellow
-    "#FFEFD5", // Papaya Whip
-    "#FFE4B5", // Moccasin
-};
-
+        private static readonly List<string> predefinedColors = new List<string>
+        {
+            "#D32F2F", // Flat Red
+            "#1976D2", // Flat Blue
+            "#388E3C", // Flat Green            
+            "#AB47BC", // Flat Magenta
+            "#26C6DA", // Flat Cyan
+            "#757575", // Flat Black
+            "#BDBDBD", // Flat White
+            "#5D4037", // Flat Maroon
+            "#2E7D32", // Flat Dark Green
+            "#1565C0", // Flat Navy
+            "#AFB42B", // Flat Olive
+            "#7B1FA2", // Flat Purple
+            "#00897B", // Flat Teal
+            "#BDBDBD", // Flat Silver
+            "#F44336", // Flat Red 2
+            "#E91E63", // Flat Pink
+            "#9C27B0", // Flat Purple 2
+            "#673AB7", // Flat Deep Purple
+            "#3F51B5", // Flat Indigo
+            "#2196F3", // Flat Blue 2
+            "#03A9F4", // Flat Light Blue
+            "#00BCD4", // Flat Cyan 2
+            "#009688", // Flat Teal 2
+            "#4CAF50", // Flat Green 2
+            "#8BC34A", // Flat Light Green
+            "#CDDC39", // Flat Lime
+            "#FFEB3B", // Flat Yellow 2
+            "#FFC107", // Flat Amber
+            "#FF9800", // Flat Orange
+            "#FF5722", // Flat Deep Orange
+            "#795548", // Flat Brown
+            "#9E9E9E", // Flat Grey
+            "#607D8B", // Flat Blue Grey
+            "#E53935", // Flat Red 3
+            "#D81B60", // Flat Pink 2
+            "#8E24AA", // Flat Purple 3
+            "#5E35B1", // Flat Deep Purple 2
+            "#3949AB", // Flat Indigo 2
+            "#1E88E5", // Flat Blue 3
+            "#039BE5", // Flat Light Blue 2
+            "#00ACC1", // Flat Cyan 3
+            "#00897B", // Flat Teal 3
+            "#43A047", // Flat Green 3
+            "#7CB342", // Flat Light Green 2
+            "#C0CA33"  // Flat Lime 2
+        };
 
         [HttpGet()]
         [ProducesResponseType((int)HttpStatusCode.OK)]
@@ -68,6 +92,12 @@ namespace ArquivosDoDisco.Web.Controllers
         {
             MyDiskItemEntity structure = await FileManager.ListFoldersAndFilesAsync($"{selectedDrive}:/");
 
+            if (structure.Children != null)
+            {
+                structure.SortChildrenBySize(structure);
+                //structure.Children = structure.Children.OrderByDescending(item => item.Size).ToList();
+            }
+
             int totalDescendants = CountDescendants(structure.Children);
 
             if (structure?.Children != null)
@@ -98,31 +128,46 @@ namespace ArquivosDoDisco.Web.Controllers
 
         private void AddColorToChildren(Entities.MyDiskItemEntity item, string color, int totalDescendants, int depth = 1)
         {
-            double percentage = 80.0 * depth / totalDescendants;
+            double percentage = (double)depth / ((double)totalDescendants * 1.2) * 90;
 
-            // Atribuir a cor base a este item
-            item.Color = InterpolateToGrey(color, percentage);  // Aumente a porcentagem de cinza com base no número total de descendentes
+            // Atribuir a cor base a este item  
+            item.Color = InterpolateToGrey(color, percentage); // Aumente a porcentagem de cinza com base no número total de descendentes  
 
-            if (item.Children == null)
+            if (item.Children == null || !item.Children.Any())
             {
+                item.Color = Desaturate(item.Color, 80.0);
                 return;
             }
 
+            int childIndex = 0;
             foreach (var child in item.Children)
             {
-                // Atribuir a cor base a cada criança e repetir o processo recursivamente
-                AddColorToChildren(child, item.Color, totalDescendants, depth + 1);  
+                // Atribuir a cor base a cada criança e repetir o processo recursivamente  
+                if (childIndex % 2 == 0) // Se o índice for par
+                {
+                    AddColorToChildren(child, Saturate(item.Color, 55), totalDescendants, depth + 1);
+                }
+                else
+                {
+                    AddColorToChildren(child, Saturate(item.Color, 20), totalDescendants, depth + 1);
+                    //AddColorToChildren(child, item.Color, totalDescendants, depth + 1);
+                }
+                childIndex++;
             }
         }
 
         private string GenerateBaseColor(int index)
         {
-            // Use o índice para selecionar uma cor da lista de cores predefinidas.
-            // Use o operador % para garantir que o índice esteja dentro do intervalo da lista de cores.
-            return predefinedColors[index % predefinedColors.Count];
+            double lighterPercentage = 0.4;
+
+            string hex = predefinedColors[index % predefinedColors.Count];
+
+            Color color = ColorTranslator.FromHtml(hex);
+
+            Color lighterColor = Color.FromArgb(color.A, Math.Min(color.R + (int)(lighterPercentage * 255), 255), Math.Min(color.G + (int)(lighterPercentage * 255), 255), Math.Min(color.B + (int)(lighterPercentage * 255), 255));
+            
+            return $"#{lighterColor.R:X2}{lighterColor.G:X2}{lighterColor.B:X2}";
         }
-
-
 
         [HttpGet("{selectedDrive}/folder/{selectedFolder}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
@@ -230,6 +275,25 @@ namespace ArquivosDoDisco.Web.Controllers
             }
         }
 
+        public static string Saturate(string hexColor, double percentage)
+        {
+            Color originalColor = ColorTranslator.FromHtml(hexColor);
+
+            // Convert from RGB to HSL
+            double h, s, l;
+            RgbToHsl(originalColor.R, originalColor.G, originalColor.B, out h, out s, out l);
+
+            // Increase the saturation
+            s += (1 - s) * (percentage / 100.0);
+
+            // Convert back to RGB
+            double r, g, b;
+            HslToRgb(h, s, l, out r, out g, out b);
+
+            Color saturatedColor = Color.FromArgb((int)r, (int)g, (int)b);
+
+            return "#" + saturatedColor.R.ToString("X2") + saturatedColor.G.ToString("X2") + saturatedColor.B.ToString("X2");
+        }
 
         public static string Desaturate(string hexColor, double percentage)
         {

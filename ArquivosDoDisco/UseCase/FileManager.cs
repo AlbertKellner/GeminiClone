@@ -45,7 +45,7 @@ namespace ArquivosDoDisco.UseCase
 
             await ListFolderContentsAsync(rootFolder);
 
-            rootFolder.SortChildrenBySize();
+            rootFolder.SortChildrenBySize(rootFolder);
 
             //DriverFind.SaveStructureAsJson(rootFolder);
 

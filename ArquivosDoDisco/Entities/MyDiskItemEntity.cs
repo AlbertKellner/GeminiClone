@@ -39,13 +39,22 @@ namespace ArquivosDoDisco.Entities
         }
 
 
-        public void SortChildrenBySize()
+        public void SortChildrenBySize(Entities.MyDiskItemEntity item)
         {
-            if (Children != null)
+            if (item.Children == null)
             {
-                Children.Sort((child1, child2) => child2.Size.CompareTo(child1.Size));
+                return;
+            }
+
+            // Sort in descending order
+            item.Children.Sort((a, b) => b.Size.CompareTo(a.Size));
+
+            foreach (var child in item.Children)
+            {
+                SortChildrenBySize(child);
             }
         }
+
 
         public List<ExtensionSummaryEntity> GetTotalSizePerExtension()
         {
