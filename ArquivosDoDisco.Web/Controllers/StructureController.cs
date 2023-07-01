@@ -68,14 +68,15 @@ namespace ArquivosDoDisco.Web.Controllers
         {
             MyDiskItemEntity structure = await FileManager.ListFoldersAndFilesAsync($"{selectedDrive}:/");
 
+            int totalDescendants = CountDescendants(structure.Children);
+
             if (structure?.Children != null)
             {
                 for (int i = 0; i < structure.Children.Count; i++)
                 {
-                    AddColorToChildren(structure.Children[i], GenerateBaseColor(i));
+                    AddColorToChildren(structure.Children[i], GenerateBaseColor(i), totalDescendants);
                 }
             }
-
 
             //RemoveNonFoldersRecursively(structure);
             //RemoveFoldersRecursively(structure, 0);
@@ -95,10 +96,12 @@ namespace ArquivosDoDisco.Web.Controllers
             }
         }
 
-        private void AddColorToChildren(Entities.MyDiskItemEntity item, string color)
+        private void AddColorToChildren(Entities.MyDiskItemEntity item, string color, int totalDescendants, int depth = 1)
         {
+            double percentage = 80.0 * depth / totalDescendants;
+
             // Atribuir a cor base a este item
-            item.Color = color;
+            item.Color = InterpolateToGrey(color, percentage);  // Aumente a porcentagem de cinza com base no número total de descendentes
 
             if (item.Children == null)
             {
@@ -108,7 +111,7 @@ namespace ArquivosDoDisco.Web.Controllers
             foreach (var child in item.Children)
             {
                 // Atribuir a cor base a cada criança e repetir o processo recursivamente
-                AddColorToChildren(child, color);
+                AddColorToChildren(child, color, depth + 1);
             }
         }
 
@@ -153,12 +156,11 @@ namespace ArquivosDoDisco.Web.Controllers
 
         public static string InterpolateToGrey(string hexColor, double percentage)
         {
-            if (!double.TryParse(hexColor.Substring(1, 2), System.Globalization.NumberStyles.HexNumber, null, out double r) ||
-                !double.TryParse(hexColor.Substring(3, 2), System.Globalization.NumberStyles.HexNumber, null, out double g) ||
-                !double.TryParse(hexColor.Substring(5, 2), System.Globalization.NumberStyles.HexNumber, null, out double b))
-            {
-                throw new ArgumentException("Invalid color format");
-            }
+            Color originalColor = ColorTranslator.FromHtml(hexColor);
+
+            double r = originalColor.R;
+            double g = originalColor.G;
+            double b = originalColor.B;
 
             double grey = (r + g + b) / 3;
 
@@ -170,6 +172,24 @@ namespace ArquivosDoDisco.Web.Controllers
 
             return "#" + interpolatedColor.R.ToString("X2") + interpolatedColor.G.ToString("X2") + interpolatedColor.B.ToString("X2");
         }
+
+        private int CountDescendants(List<Entities.MyDiskItemEntity> items)
+        {
+            int count = 0;
+
+            if (items != null)
+            {
+                foreach (var item in items)
+                {
+                    // Conta este nó e todos os seus descendentes
+                    count += 1 + CountDescendants(item.Children);
+                }
+            }
+
+            return count;
+        }
+
+
 
         private void RemoveNonFoldersRecursively(Entities.MyDiskItemEntity item)
         {

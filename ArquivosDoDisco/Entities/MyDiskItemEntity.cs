@@ -25,6 +25,11 @@ namespace ArquivosDoDisco.Entities
         [JsonInclude]
         public List<MyDiskItemEntity> Children { get; set; }
 
+        public override string ToString()
+        {
+            return FullPath;
+        }
+
         public void UpdateFolderSize()
         {
             if (IsFolder)
