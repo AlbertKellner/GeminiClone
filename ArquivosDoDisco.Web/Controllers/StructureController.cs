@@ -13,6 +13,31 @@ namespace ArquivosDoDisco.Web.Controllers
     [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
     public class StructureController : Controller
     {
+        private readonly List<string> predefinedColors = new List<string>
+{
+    "#FFCCCC", // Light Red
+    "#CCFFCC", // Light Green
+    "#CCCCFF", // Light Blue
+    "#FFFFCC", // Light Yellow
+    "#FFCCFF", // Light Magenta
+    "#FFDAB9", // Peach Puff
+    "#E6E6FA", // Lavender
+    "#FFF0F5", // Lavender Blush
+    "#D8BFD8", // Thistle
+    "#FFE4E1", // Misty Rose
+    "#FFF5EE", // Seashell
+    "#F0FFF0", // Honeydew
+    "#F5FFFA", // Mint Cream
+    "#F0F8FF", // Alice Blue
+    "#F0E68C", // Khaki
+    "#E6E6FA", // Lavender
+    "#B0E0E6", // Powder Blue
+    "#FAFAD2", // Light Goldenrod Yellow
+    "#FFEFD5", // Papaya Whip
+    "#FFE4B5", // Moccasin
+};
+
+
         [HttpGet()]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
@@ -41,8 +66,15 @@ namespace ArquivosDoDisco.Web.Controllers
         public async Task<IActionResult> GetAllByDiskAsync(
             [FromRoute] string selectedDrive)
         {
-            Entities.MyDiskItemEntity structure = await FileManager.ListFoldersAndFilesAsync($"{selectedDrive}:/");
+            MyDiskItemEntity structure = await FileManager.ListFoldersAndFilesAsync($"{selectedDrive}:/");
 
+            if (structure?.Children != null)
+            {
+                for (int i = 0; i < structure.Children.Count; i++)
+                {
+                    AddColorToChildren(structure.Children[i], GenerateBaseColor(i));
+                }
+            }
 
 
             //RemoveNonFoldersRecursively(structure);
@@ -62,6 +94,32 @@ namespace ArquivosDoDisco.Web.Controllers
                 return NoContent();
             }
         }
+
+        private void AddColorToChildren(Entities.MyDiskItemEntity item, string color)
+        {
+            // Atribuir a cor base a este item
+            item.Color = color;
+
+            if (item.Children == null)
+            {
+                return;
+            }
+
+            foreach (var child in item.Children)
+            {
+                // Atribuir a cor base a cada criança e repetir o processo recursivamente
+                AddColorToChildren(child, color);
+            }
+        }
+
+        private string GenerateBaseColor(int index)
+        {
+            // Use o índice para selecionar uma cor da lista de cores predefinidas.
+            // Use o operador % para garantir que o índice esteja dentro do intervalo da lista de cores.
+            return predefinedColors[index % predefinedColors.Count];
+        }
+
+
 
         [HttpGet("{selectedDrive}/folder/{selectedFolder}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
