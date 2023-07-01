@@ -11,6 +11,7 @@
         <select id="getDisks" onchange="getStructure(this.value);">
             <!-- Dropdown options will be populated with JavaScript -->
         </select>
+        <div id="FolderItems"></div>
     </form>
 
     <div>
@@ -105,6 +106,14 @@
                 .labelOrientation('angular')
                 .onHover((node, event) => console.log(node))
                 //.onClick((node, event) => console.log(node))
+
+                //pastas
+                //.onClick((node, event) => {
+                //    if (node.children) {
+                //        displayFolderItems(node);
+                //    }
+                //})
+
                 //.focusOnNode({ name: 'Common7' })
                 //.color('color')
                 //.color((d, parent) => color(parent ? parent.data.name : null))
@@ -118,6 +127,18 @@
                 //})
                 (document.getElementById("sunburstChart"));
         }
+
+        //pastas
+        //function displayFolderItems(node) {
+        //    var folderItemsDiv = document.getElementById("FolderItems");
+        //    folderItemsDiv.innerHTML = ""; // clear the div
+
+        //    node.children.forEach(function (item) {
+        //        var div = document.createElement("div");
+        //        div.textContent = item.name;
+        //        folderItemsDiv.appendChild(div);
+        //    });
+        //}
 
         function removeValueIfChildren(node) {
             if (node.children) {
