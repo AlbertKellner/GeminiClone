@@ -13,9 +13,13 @@
             position: fixed;
             right: 0;
             width: 800px;
-            height: 100%;
+            /*height: 100%;*/
             overflow: auto;
         }
+
+            #FolderItems th {
+                text-align: left;
+            }
 
         .chart, .chart svg, .chart canvas {
             position: fixed;
@@ -35,7 +39,16 @@
         <select id="getDisks" onchange="getStructure(this.value);">
             <!-- Dropdown options will be populated with JavaScript -->
         </select>
-        <div id="FolderItems"></div>
+        <table id="FolderItems">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>File Size</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </form>
 
     <div>
@@ -133,6 +146,7 @@
 
                 //pastas
                 .onClick((node, event) => {
+                    myChart.focusOnNode(node);
                     if (node.children) {
                         displayFolderItems(node);
                     }
@@ -150,21 +164,31 @@
                 //        : `${label.slice(0, Math.round(numFitChars) - 3)}...`;
                 //})
                 (document.getElementById("sunburstChart"));
+
+            displayFolderItems(data);
+
         }
 
         //pastas
         function displayFolderItems(node) {
-            var folderItemsDiv = document.getElementById("FolderItems");
-            folderItemsDiv.innerHTML = ""; // clear the div
+            var folderItemsBody = document.querySelector("#FolderItems tbody");
+            folderItemsBody.innerHTML = ""; // clear the tbody
 
-            if (node.children) {
-                node.children.forEach(function (item) {
-                    var div = document.createElement("div");
-                    div.textContent = item.name;
-                    folderItemsDiv.appendChild(div);
-                });
-            }
+            node.children.forEach(function (item) {
+                var tr = document.createElement("tr");
+
+                var tdName = document.createElement("td");
+                tdName.textContent = item.name;
+                tr.appendChild(tdName);
+
+                var tdSize = document.createElement("td");
+                tdSize.textContent = item.value;
+                tr.appendChild(tdSize);
+
+                folderItemsBody.appendChild(tr);
+            });
         }
+
 
 
         function removeValueIfChildren(node) {
