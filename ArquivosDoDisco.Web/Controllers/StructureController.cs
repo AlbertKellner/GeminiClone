@@ -98,7 +98,7 @@ namespace ArquivosDoDisco.Web.Controllers
                 //structure.Children = structure.Children.OrderByDescending(item => item.Size).ToList();
             }
 
-            int totalDescendants = CountDescendants(structure.Children);
+            int totalDescendants = structure.Children != null ? CountDescendants(structure.Children) : 0;
 
             if (structure?.Children != null)
             {
@@ -128,10 +128,9 @@ namespace ArquivosDoDisco.Web.Controllers
 
         private void AddColorToChildren(Entities.MyDiskItemEntity item, string color, int totalDescendants, int depth = 1)
         {
-            double percentage = (double)depth / ((double)totalDescendants * 1.2) * 90;
+            double percentage = depth / (totalDescendants * 1.2) * 80;
 
-            // Atribuir a cor base a este item  
-            item.Color = InterpolateToGrey(color, percentage); // Aumente a porcentagem de cinza com base no número total de descendentes  
+            item.Color = InterpolateToGrey(color, percentage);
 
             if (item.Children == null || !item.Children.Any())
             {
@@ -142,15 +141,13 @@ namespace ArquivosDoDisco.Web.Controllers
             int childIndex = 0;
             foreach (var child in item.Children)
             {
-                // Atribuir a cor base a cada criança e repetir o processo recursivamente  
-                if (childIndex % 2 == 0) // Se o índice for par
+                if (childIndex % 2 == 0)
                 {
-                    AddColorToChildren(child, Saturate(item.Color, 55), totalDescendants, depth + 1);
+                    AddColorToChildren(child, Saturate(item.Color, 10), totalDescendants, depth + 1);
                 }
                 else
                 {
-                    AddColorToChildren(child, Saturate(item.Color, 20), totalDescendants, depth + 1);
-                    //AddColorToChildren(child, item.Color, totalDescendants, depth + 1);
+                    AddColorToChildren(child, Saturate(item.Color, 30), totalDescendants, depth + 1);
                 }
                 childIndex++;
             }
