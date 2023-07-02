@@ -2,6 +2,30 @@
 <head>
     <script src="//unpkg.com/d3"></script>
     <script src="//unpkg.com/sunburst-chart"></script>
+
+    @*<script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/kapsule"></script>
+    <script src="https://unpkg.com/accessor-fn"></script>
+    <script src="https://unpkg.com/float-tooltip"></script>
+    <script src="~/js/sunburst.js"></script>*@
+    <style>
+        #FolderItems {
+            position: fixed;
+            right: 0;
+            width: 800px;
+            height: 100%;
+            overflow: auto;
+        }
+
+        .chart, .chart svg, .chart canvas {
+            position: fixed;
+            left: 0;
+            width: calc(100% - 800px) !important;
+            height: 100% !important;
+            overflow: auto;
+        }
+    </style>
+
 </head>
 <body>
     @RenderBody()
@@ -88,7 +112,7 @@
             //};
 
             document.querySelector(".chart").innerHTML = "";
-            
+
             removeValueIfChildren(data);
 
             const color = d3.scaleOrdinal(d3.schemePaired);
@@ -108,11 +132,11 @@
                 //.onClick((node, event) => console.log(node))
 
                 //pastas
-                //.onClick((node, event) => {
-                //    if (node.children) {
-                //        displayFolderItems(node);
-                //    }
-                //})
+                .onClick((node, event) => {
+                    if (node.children) {
+                        displayFolderItems(node);
+                    }
+                })
 
                 //.focusOnNode({ name: 'Common7' })
                 .color('color')
@@ -129,16 +153,19 @@
         }
 
         //pastas
-        //function displayFolderItems(node) {
-        //    var folderItemsDiv = document.getElementById("FolderItems");
-        //    folderItemsDiv.innerHTML = ""; // clear the div
+        function displayFolderItems(node) {
+            var folderItemsDiv = document.getElementById("FolderItems");
+            folderItemsDiv.innerHTML = ""; // clear the div
 
-        //    node.children.forEach(function (item) {
-        //        var div = document.createElement("div");
-        //        div.textContent = item.name;
-        //        folderItemsDiv.appendChild(div);
-        //    });
-        //}
+            if (node.children) {
+                node.children.forEach(function (item) {
+                    var div = document.createElement("div");
+                    div.textContent = item.name;
+                    folderItemsDiv.appendChild(div);
+                });
+            }
+        }
+
 
         function removeValueIfChildren(node) {
             if (node.children) {
