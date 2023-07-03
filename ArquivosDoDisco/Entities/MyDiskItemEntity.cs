@@ -25,6 +25,26 @@ namespace ArquivosDoDisco.Entities
         [JsonInclude]
         public List<MyDiskItemEntity> Children { get; set; }
 
+        [JsonPropertyName("formattedSize")]
+        public string FormattedSize
+        {
+            get
+            {
+                string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+                double len = Size;
+                int order = 0;
+                while (len >= 1024 && order < sizes.Length - 1)
+                {
+                    order++;
+                    len = len / 1024;
+                }
+
+                // Adjust the format string to your preferences. For example "{0:0.##} {1}" would
+                // show a maximum of two decimal places, and no decimal places if the number is a whole number.
+                return String.Format("{0:0.##} {1}", len, sizes[order]);
+            }
+        }
+
         public override string ToString()
         {
             return FullPath;
