@@ -31,7 +31,7 @@ namespace ArquivosDoDisco.UseCase
                 Console.WriteLine($"Drive: {drive.Name}, Type: {drive.DriveType}, VolumeLabel: {drive.VolumeLabel}, Size: {drive.TotalSize}");
             }
 
-            var driveName = drives.First(x => x.Name == "E:\\").Name;
+            var driveName = drives.First(x => x.Name == "C:\\").Name;
 
             //Console.Write($"Unidade selecionada: {driveName}");
 

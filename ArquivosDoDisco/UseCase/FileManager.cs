@@ -1,19 +1,24 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices; // Para MethodImpl AggressiveInlining
+using System.Threading.Tasks;
+using System.Buffers; // Para ArrayPool
 using ArquivosDoDisco.Entities;
-using Microsoft.Extensions.ObjectPool;
 
 namespace ArquivosDoDisco.UseCase
 {
     public static class FileManager
     {
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern IntPtr FindFirstFile(string lpFileName, out WIN32_FIND_DATA lpFindFileData);
+        private static extern IntPtr FindFirstFile(string lpFileName, out WIN32_FIND_DATA lpFindFileData);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
+        private static extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool FindClose(IntPtr hFindFile);
+        private static extern bool FindClose(IntPtr hFindFile);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct WIN32_FIND_DATA
@@ -32,90 +37,127 @@ namespace ArquivosDoDisco.UseCase
             public string cAlternateFileName;
         }
 
-        private static readonly ObjectPool<MyDiskItemEntity> FolderPool = new DefaultObjectPool<MyDiskItemEntity>(new DefaultPooledObjectPolicy<MyDiskItemEntity>());
-
-        public static async Task<MyDiskItemEntity> ListFoldersAndFilesAsync(string path)
+        public static Task<MyDiskItemEntity> ListFoldersAndFilesAsync(string path)
         {
-            var rootFolder = new MyDiskItemEntity
+            return Task.Run(() =>
             {
-                Name = "root",
-                FullPath = path,
-                Children = new List<MyDiskItemEntity>()
-            };
+                // Garantir que não termine com barra
+                if (path.EndsWith("\\"))
+                    path = path.TrimEnd('\\');
 
-            await ListFolderContentsAsync(rootFolder);
-
-            rootFolder.SortChildrenBySize(rootFolder);
-
-            //DriverFind.SaveStructureAsJson(rootFolder);
-
-            return rootFolder;
-        }
-
-
-        private static async Task ListFolderContentsAsync(MyDiskItemEntity folder)
-        {
-            WIN32_FIND_DATA findData;
-            IntPtr findHandle = FindFirstFile(Path.Combine(folder.FullPath, "*"), out findData);
-
-            if (findHandle != IntPtr.Zero)
-            {
-                List<Task> tasks = new List<Task>();
-
-                do
+                var rootFolder = new MyDiskItemEntity
                 {
-                    if (findData.cFileName == "." || findData.cFileName == "..") continue;
+                    Name = "root",
+                    FullPath = path,
+                    Children = new List<MyDiskItemEntity>(),
+                    Size = 0
+                };
 
-                    if ((findData.dwFileAttributes & 0x10) == 0x10) // Diretório
+                ListFolderContents(rootFolder);
+
+                // Ordenar no final se necessário
+                rootFolder.SortChildrenBySize(rootFolder);
+                return rootFolder;
+            });
+        }
+
+        // Controlar grau de paralelismo
+        private static readonly ParallelOptions parallelOptions = new ParallelOptions
+        {
+            // Reduzir ao mínimo para diminuir uso de CPU (p.ex.: 1 ou 2 threads somente)
+            MaxDegreeOfParallelism = 2
+        };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsDirectory(uint attributes) => (attributes & 0x10) == 0x10;
+
+        private static void ListFolderContents(MyDiskItemEntity folder)
+        {
+            // Para evitar Path.Combine, apenas adicionamos "*" manualmente
+            string searchPath = folder.FullPath + "\\*";
+
+            WIN32_FIND_DATA findData;
+            IntPtr findHandle = FindFirstFile(searchPath, out findData);
+
+            if (findHandle == IntPtr.Zero)
+                return;
+
+            // Usar um ArrayPool para reutilizar arrays e reduzir GC
+            // Estimando que 128 é um tamanho razoável. Se for insuficiente para muitos diretórios, pode-se redimensionar depois.
+            MyDiskItemEntity[] dirBuffer = ArrayPool<MyDiskItemEntity>.Shared.Rent(128);
+            int dirCount = 0;
+
+            do
+            {
+                var name = findData.cFileName;
+                if (name == "." || name == "..") continue;
+
+                if (IsDirectory(findData.dwFileAttributes))
+                {
+                    // Expandir buffer se necessário (menos ideal, mas caso encontre mais de 128 dirs)
+                    if (dirCount == dirBuffer.Length)
                     {
-                        TakeFolders(folder, findData, tasks);
+                        MyDiskItemEntity[] newArr = ArrayPool<MyDiskItemEntity>.Shared.Rent(dirBuffer.Length * 2);
+                        Array.Copy(dirBuffer, newArr, dirCount);
+                        ArrayPool<MyDiskItemEntity>.Shared.Return(dirBuffer, true);
+                        dirBuffer = newArr;
                     }
-                    else // Arquivo
+
+                    var subFolder = new MyDiskItemEntity
                     {
-                        TakeFiles(folder, findData);
-                    }
+                        Name = name,
+                        // Concatenação manual do path
+                        FullPath = folder.FullPath + "\\" + name,
+                        Children = new List<MyDiskItemEntity>(),
+                        Size = 0
+                    };
+                    folder.Children.Add(subFolder);
+                    dirBuffer[dirCount++] = subFolder;
                 }
-                while (FindNextFile(findHandle, out findData));
+                else
+                {
+                    long fileSize = ((long)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
 
-                FindClose(findHandle);
+                    // Evitar Path.GetExtension e extrair extensão manualmente
+                    string extension = null;
+                    int dotIndex = name.LastIndexOf('.');
+                    if (dotIndex >= 0 && dotIndex < name.Length - 1)
+                    {
+                        extension = name.Substring(dotIndex);
+                    }
 
-                await Task.WhenAll(tasks.ToArray());
+                    var file = new MyDiskItemEntity
+                    {
+                        Name = name,
+                        Size = fileSize,
+                        Extension = extension,
+                        FullPath = folder.FullPath + "\\" + name
+                    };
 
-                folder.UpdateFolderSize();
+                    folder.Children.Add(file);
+                    folder.Size += fileSize; // Incremental
+                }
             }
-        }
+            while (FindNextFile(findHandle, out findData));
 
+            FindClose(findHandle);
 
-        private static void TakeFolders(MyDiskItemEntity folder, WIN32_FIND_DATA findData, List<Task> tasks)
-        {
-            var subFolder = new MyDiskItemEntity
+            if (dirCount > 0)
             {
-                Name = findData.cFileName,
-                FullPath = Path.Combine(folder.FullPath, findData.cFileName),
-                Children = new List<MyDiskItemEntity>()
-            };
+                // Convertendo para índice já que usamos Parallel.For
+                Parallel.For(0, dirCount, parallelOptions, i =>
+                {
+                    ListFolderContents(dirBuffer[i]);
+                });
 
-            folder.Children.Add(subFolder);
+                // Somar tamanhos das subpastas
+                for (int i = 0; i < dirCount; i++)
+                {
+                    folder.Size += dirBuffer[i].Size;
+                }
+            }
 
-            tasks.Add(Task.Run(async () =>
-            {
-                await ListFolderContentsAsync(subFolder);
-                FolderPool.Return(subFolder);
-            }));
-        }
-
-        private static void TakeFiles(MyDiskItemEntity folder, WIN32_FIND_DATA findData)
-        {
-            long fileSize = ((long)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
-
-            var file = new MyDiskItemEntity
-            {
-                Name = findData.cFileName,
-                Size = fileSize,
-                Extension = Path.GetExtension(findData.cFileName),
-                FullPath = Path.Combine(folder.FullPath, findData.cFileName)
-            };
-            folder.Children.Add(file);
+            ArrayPool<MyDiskItemEntity>.Shared.Return(dirBuffer, true);
         }
 
     }
