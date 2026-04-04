@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Disk Explorer</title>
+
+    <script src="//unpkg.com/d3"></script>
+    <script src="//unpkg.com/sunburst-chart"></script>
+
+    <link rel="stylesheet" href="/css/site.css" />
+
+    <style>
+        #FolderItems {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 400px;
+            height: 100%;
+            overflow: auto;
+            background: #1e1e2e;
+            border-left: 1px solid #313244;
+            z-index: 10;
+        }
+
+        #FolderItems th {
+            text-align: left;
+            padding: 8px 12px;
+            background: #181825;
+            color: #cdd6f4;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid #313244;
+            position: sticky;
+            top: 0;
+        }
+
+        #FolderItems td {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #cdd6f4;
+            border-bottom: 1px solid #181825;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 260px;
+        }
+
+        #FolderItems td:last-child {
+            color: #a6e3a1;
+            font-family: monospace;
+            text-align: right;
+        }
+
+        #FolderItems tr:hover td {
+            background: #313244;
+        }
+
+        .chart, .chart svg, .chart canvas {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100% !important;
+            width: calc(100vw - 400px) !important;
+            overflow: auto;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 400px;
+            height: 44px;
+            background: rgba(17, 17, 27, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            border-bottom: 1px solid #313244;
+        }
+
+        .toolbar label {
+            color: #cdd6f4;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .toolbar select {
+            background: #181825;
+            color: #cdd6f4;
+            border: 1px solid #45475a;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            flex: 1;
+            max-width: 480px;
+        }
+
+        .toolbar select:focus {
+            outline: none;
+            border-color: #89b4fa;
+        }
+
+        #status-msg {
+            color: #6c7086;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #11111b;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .chart-container {
+            position: fixed;
+            left: 0;
+            top: 44px;
+            right: 400px;
+            bottom: 0;
+        }
+
+        #sunburstChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        #table-header {
+            padding: 10px 12px 4px;
+            font-size: 11px;
+            color: #6c7086;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <label for="getDisks">Drive:</label>
+        <select id="getDisks" onchange="getStructure(this.value);">
+            <option value="">Aguardando...</option>
+        </select>
+        <span id="status-msg"></span>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart" id="sunburstChart"></div>
+    </div>
+
+    <div id="FolderItems">
+        <div id="table-header">Conteúdo da pasta</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tamanho</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="/js/colors.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

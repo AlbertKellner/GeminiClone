@@ -1,0 +1,305 @@
+# Estrutura de Pastas
+
+## Propósito
+
+Este arquivo define e documenta a estrutura de pastas e módulos deste repositório. Toda mudança estrutural relevante deve ser registrada aqui antes de ser executada.
+
+---
+
+## Estrutura de Governança (Imutável sem Instrução Explícita)
+
+A estrutura abaixo foi criada no bootstrap e não deve ser alterada sem instrução explícita do usuário:
+
+```
+/
+├── CLAUDE.md                           # Ponto de entrada da governança
+├── README.md                           # Documentação pública do repositório
+├── open-questions.md                   # Dúvidas e ambiguidades abertas
+├── assumptions-log.md                  # Premissas ativas
+│
+├── scripts/                            # Scripts operacionais e de configuração de ambiente
+│   ├── governance-audit.sh             # Auditoria automatizada de consistência de governança
+│   ├── pipeline-timing.sh             # Cálculo de métricas de tempo do pipeline CI
+│   ├── setup-env.sh                    # Modelo declarativo de configuração de ambiente
+│   ├── setup-dotnet.sh                 # Setup do .NET SDK (Linux)
+│   ├── setup-dotnet.ps1                # Setup do .NET SDK (Windows)
+│   ├── operational-runbook.md          # Portas, URLs, comandos, troubleshooting
+│   ├── required-vars.md               # Variáveis de ambiente e secrets requeridos
+│   └── container-setup.md             # Dependências de sistema e configuração do container
+│
+├── wiki/                               # Arquivos-fonte da GitHub Wiki (fonte canônica)
+│   ├── Home.md                         # Ponto de entrada e sumário navegável
+│   ├── _Sidebar.md                     # Sidebar de navegação por agrupamento
+│   ├── Governance-Architecture.md      # Governança: estilo arquitetural, pastas, componentes
+│   ├── Governance-Development-Patterns.md  # Governança: padrões de desenvolvimento
+│   ├── Governance-Code-Conventions.md  # Governança: convenções de código
+│   ├── Governance-Testing.md           # Governança: estratégia de testes
+│   ├── Governance-Security.md          # Governança: autenticação JWT
+│   ├── Governance-Observability.md     # Governança: Correlation ID, Serilog, Datadog
+│   ├── Governance-CI-CD.md             # Governança: pipelines de CI/CD
+│   ├── Governance-Integrations.md      # Governança: Refit + Polly, Memory Cache
+│   ├── Governance-Operation.md         # Governança: setup, build, Docker
+│   ├── Governance-Quality.md           # Governança: exceções, Problem Details
+│   ├── Governance-Decisions.md         # Governança: decisões e restrições
+│   ├── Domain-Overview.md              # Domínio: visão geral da aplicação
+│   ├── Domain-Business-Rules.md        # Domínio: índice de regras de negócio
+│   ├── Feature-Health.md               # Feature: Health Check
+│   ├── Feature-<NomeDaFeature>.md      # Uma página por Feature implementada
+│   ├── Claude-Overview.md              # Claude: visão geral operacional
+│   ├── Claude-Skills.md                # Claude: catálogo de skills
+│   ├── Claude-Hooks.md                 # Claude: hooks configurados
+│   └── Claude-Conventions.md           # Claude: convenções e restrições
+│
+├── .claude/
+│   ├── rules/                          # Políticas operacionais (o quê)
+│   │   ├── architecture-governance.md
+│   │   ├── bash-error-logging.md
+│   │   ├── endpoint-validation.md
+│   │   ├── environment-readiness.md
+│   │   ├── folder-governance.md
+│   │   ├── governance-policies.md       # Consolidação: normalização, contexto, propagação, ambiguidade, snippets
+│   │   ├── instruction-review.md        # Meta-regra: revisão obrigatória via REVIEW.md
+│   │   ├── execution-time-tracking.md   # Rastreamento de tempo efetivo de sessão e métricas de pipeline
+│   │   ├── governance-audit.md          # Auditoria automatizada de consistência de governança
+│   │   ├── governance-behavior-tracking.md # Rastreamento de comportamentos esperados
+│   │   ├── naming-governance.md
+│   │   ├── pre-planning-consultation.md  # Consulta pré-planejamento obrigatória (comportamento #12)
+│   │   ├── pr-metadata-governance.md
+│   │   └── source-of-truth-priority.md
+│   │
+│   ├── skills/                         # Workflows operacionais (como)
+│   │   ├── apply-user-snippet/
+│   │   ├── evolve-governance/
+│   │   ├── implement-request/
+│   │   ├── ingest-definition/
+│   │   ├── governance-behavior-tracking/ # Rastreamento de comportamentos esperados
+│   │   ├── governance-validation-pipeline/ # Validação de governança via subagentes
+│   │   ├── manage-pr-lifecycle/         # Criação/atualização de PR e acompanhamento de CI
+│   │   ├── auto-pr-review/              # Revisão automática de PR com ciclo Revisor↔Codificador
+│   │   ├── pr-analysis/                 # Análise de solicitações de mudança em PR existente
+│   │   ├── resolve-ambiguity/
+│   │   ├── review-alignment/
+│   │   ├── review-instructions/         # Executa REVIEW.md
+│   │   ├── validate-endpoints/          # Validação HTTP real de endpoints
+│   │   └── verify-environment/          # Verificação de pré-requisitos de ambiente
+│   │
+│   ├── hooks/                          # Scripts de enforcement
+│   │   ├── instruction-change-detector.sh
+│   │   ├── pre-commit-gate.sh
+│   │   ├── pre-planning-gate.sh
+│   │   ├── branch-guard.sh
+│   │   ├── session-timer.sh
+│   │   ├── post-commit-pr-reminder.sh
+│   │   ├── session-start.sh            # SessionStart: limpa estado stale, injeta contexto de branch
+│   │   ├── stop-verification.sh        # Stop: verificação final de governança
+│   │   ├── bash-error-capture.sh       # PostToolUseFailure: captura automática de erros bash
+│   │   ├── compact-context.sh          # PreCompact/PostCompact: preserva estado durante compactação
+│   │   └── README.md
+│   │
+│   └── agents/                         # Agentes especializados com memória persistente
+│        ├── code-reviewer.md           # Revisor de código read-only contra governança
+│        └── governance-auditor.md      # Auditor de consistência de artefatos de governança
+│
+└── Instructions/
+    ├── operating-model.md              # Modelo operacional consolidado
+    ├── architecture/                   # Memória arquitetural e técnica
+    │   ├── technical-overview.md
+    │   ├── engineering-principles.md
+    │   ├── patterns.md
+    │   ├── naming-conventions.md
+    │   ├── folder-structure.md         # (este arquivo)
+    │   └── architecture-decisions.md
+    ├── business/                       # Memória de negócio e domínio
+    │   ├── business-rules.md
+    │   ├── invariants.md
+    │   ├── workflows.md
+    │   ├── domain-model.md
+    │   └── assumptions.md
+    ├── bdd/                            # Cenários comportamentais
+    │   ├── README.md
+    │   ├── conventions.md
+    │   └── example.feature
+    ├── contracts/                      # Contratos formais de interface
+    │   ├── README.md
+    │   ├── openapi.yaml
+    │   ├── asyncapi.yaml
+    │   ├── schemas/
+    │   └── examples/
+    ├── glossary/                       # Governança terminológica
+    │   └── ubiquitous-language.md
+    ├── decisions/                      # ADRs e decisões registradas
+    │   ├── README.md
+    │   └── adr-template.md
+    ├── snippets/                       # Snippets normativos canônicos
+    │   ├── README.md
+    │   └── canonical-snippets.md
+    └── wiki/                           # Governança da GitHub Wiki
+        └── wiki-governance.md
+```
+
+---
+
+## Estrutura de Implementação
+
+A estrutura de implementação do projeto segue **Vertical Slice Architecture** com segregação **Command/Query**.
+
+Todos os projetos ficam contidos na pasta `src/` na raiz do repositório. A solution (`.slnx`) fica na raiz de `src/`. Cada pasta de projeto tem exatamente o mesmo nome do projeto que contém, sendo permitido apenas um projeto por pasta.
+
+```
+src/
+├── Starter.Template.AOT.slnx                # Solution file
+├── Starter.Template.AOT.UnitTest/            # Projeto de testes unitários
+│   └── (espelha estrutura do projeto principal: Features/, Infra/, Shared/, TestHelpers/)
+│
+└── <NomeDoProjeto>/
+    ├── wwwroot/                              # Frontend estático (servido por UseDefaultFiles + UseStaticFiles)
+    │   ├── index.html                        # SPA — interface principal (ex: Disk Explorer)
+    │   ├── css/
+    │   │   └── site.css                      # Estilos globais
+    │   └── js/
+    │       ├── app.js                        # Lógica principal da aplicação frontend
+    │       └── colors.js                     # Algoritmo de coloração (HSL + interpolação)
+    │
+    ├── Features/
+    │   ├── Query/
+    │   │   └── <NomeDaFeature>/
+    │   │        ├── <NomeDaFeature>Endpoint/
+    │   │        │    └── <NomeDaFeature>Endpoint.cs
+    │   │        ├── <NomeDaFeature>UseCase/
+    │   │        │    └── <NomeDaFeature>UseCase.cs
+    │   │        ├── <NomeDaFeature>Interfaces/
+    │   │        │    └── I<NomeDaFeature>Repository.cs
+    │   │        ├── <NomeDaFeature>Models/
+    │   │        │    ├── <NomeDaFeature>Output.cs
+    │   │        │    └── <NomeDaFeature>Entity.cs    (quando aplicável)
+    │   │        └── <NomeDaFeature>Repository/
+    │   │             ├── <NomeDaFeature>Repository.cs
+    │   │             └── Scripts/
+    │   │                  └── <NomeDaFeature>.sql
+    │   │
+    │   └── Command/
+    │        └── <NomeDaFeature>/
+    │             ├── <NomeDaFeature>Endpoint/
+    │             │    └── <NomeDaFeature>Endpoint.cs
+    │             ├── <NomeDaFeature>UseCase/
+    │             │    └── <NomeDaFeature>UseCase.cs
+    │             ├── <NomeDaFeature>Interfaces/
+    │             │    └── I<NomeDaFeature>Repository.cs
+    │             ├── <NomeDaFeature>Models/
+    │             │    ├── <NomeDaFeature>Input.cs
+    │             │    ├── <NomeDaFeature>Output.cs   (quando aplicável)
+    │             │    └── <NomeDaFeature>Entity.cs   (quando aplicável)
+    │             └── <NomeDaFeature>Repository/
+    │                  ├── <NomeDaFeature>Repository.cs
+    │                  └── Scripts/
+    │                       └── <NomeDaFeature>.sql
+    │
+    ├── Infra/
+    │    ├── Correlation/
+    │    │    └── GuidV7.cs                    # Geração (Guid.CreateVersion7) e validação de GUID v7 (uso interno de Infra)
+    │    ├── ExceptionHandling/
+    │    │    └── GlobalExceptionHandler.cs   # Handler centralizado de exceções (IExceptionHandler + Problem Details RFC 7807)
+    │    ├── HealthChecks/
+    │    │    └── DatadogAgentHealthCheck.cs  # Verifica disponibilidade do Datadog Agent via HTTP (RN-005)
+    │    ├── Json/
+    │    │    └── AppJsonContext.cs            # JsonSerializerContext source-generated para serialização AOT-compatível da aplicação
+    │    ├── Logging/
+    │    │    ├── DatadogHttpSink.cs           # Serilog ILogEventSink: envia logs diretamente ao Datadog via HTTP; batching assíncrono
+    │    │    └── DatadogLogEntry.cs           # Modelo de log + DatadogLogJsonContext para serialização AOT-compatível
+    │    ├── Middlewares/
+    │    │    └── CorrelationIdMiddleware.cs   # Garante GUID v7 por request; enriquece Serilog LogContext; opaco para Features
+    │    ├── ModelBinding/
+    │    │    ├── NullModelBinderProvider.cs           # Substituição de providers incompatíveis com AOT (TryParse, FloatingPoint)
+    │    │    ├── EnhancedModelMetadataActivator.cs    # Workaround AOT: ativa IsEnhancedModelMetadataSupported antes do primeiro request
+    │    │    └── FallbackSimpleTypeModelBinderProvider.cs  # Substitui SimpleTypeModelBinderProvider para compatibilidade AOT
+    │    ├── ModelValidation/
+    │    │    └── NoOpObjectModelValidator.cs  # Substitui IObjectModelValidator padrão (reflection-based) por implementação AOT-compatível
+    │    └── Security/
+    │         ├── ITokenService.cs             # Contrato de geração e validação de JWT
+    │         ├── AuthenticatedUser.cs         # Modelo do usuário autenticado (Id, UserName)
+    │         ├── TokenService.cs              # Implementação JWT HS256
+    │         ├── AuthenticateFilter.cs        # IAsyncActionFilter: valida Bearer Token; enriquece LogContext com UserId e UserName
+    │         └── AuthenticateAttribute.cs     # TypeFilterAttribute: decorador [Authenticate] para Controllers
+    │
+    └── Shared/
+         ├── ExternalApi/                           # Integrações com APIs HTTP externas (DA-017)
+         │    └── <Servico>/                        # Uma subpasta por serviço externo integrado
+         │         ├── I<Servico>Api.cs             # Interface Refit (contrato HTTP; rota hardcoded)
+         │         ├── I<Servico>ApiClient.cs       # Interface de serviço (Features injetam este contrato)
+         │         ├── <Servico>ApiClient.cs        # Implementação: usa I<Servico>Api; aplica logging SNP-001
+         │         ├── <Servico>AuthenticationHandler.cs  # DelegatingHandler (quando API requer auth)
+         │         └── Models/
+         │              ├── <Servico>Input.cs       # Parâmetros da requisição à API
+         │              └── <Servico>Output.cs      # Modelo completo da resposta da API + JsonSerializerContext
+         ├── <Abstrações e interfaces genéricas reutilizáveis entre Slices>
+         ├── <Utilitários e helpers>
+         └── <Configurações de infraestrutura compartilhada>
+```
+
+### Regras de existência condicional
+
+- **Não criar pastas vazias** — toda pasta deve conter ao menos um arquivo com uso real.
+- **Não criar arquivos sem uso real** — scripts SQL, interfaces e models só existem quando necessários para a Slice.
+- `<NomeDaFeature>Input.cs` existe apenas em Commands (ou em Queries que recebem parâmetros de busca complexos).
+- `<NomeDaFeature>Output.cs` existe apenas quando há retorno estruturado.
+- `<NomeDaFeature>Entity.cs` existe apenas quando a Slice materializa objetos de domínio tipados.
+- `Scripts/` e `<NomeDaFeature>.sql` existem apenas quando a Slice acessa banco de dados via SQL.
+- `<NomeDaFeature>Input.cs` e `<NomeDaFeature>Output.cs` pertencem exclusivamente a `<Feature>Models/` da Slice. Não devem ser movidos ou duplicados em `Shared/`. Models em `Shared/ExternalApi/*/Models/` são models de APIs externas (contrato do cliente HTTP, não de Features) e seguem regras próprias (DA-017). Models de APIs externas não se confundem com models de Features (DA-020).
+- Features que consomem APIs externas via `Shared/ExternalApi/` devem possuir seu próprio model de Output em `<Feature>Models/`, mesmo que a estrutura espelhe o model da API externa. O model de Shared é o contrato do cliente HTTP; o model da Feature é o contrato do endpoint. Features não devem usar types de `Shared/` como tipo de retorno de seus Use Cases ou Endpoints (DA-020).
+
+---
+
+## Regras para Criação de Novas Pastas
+
+1. Toda nova pasta de implementação deve ser registrada neste arquivo com seu propósito.
+2. Não criar pastas sem justificativa explícita.
+3. Não criar subpastas para conter apenas um arquivo quando múltiplos são improváveis.
+4. Não duplicar estrutura quando há local existente apropriado.
+5. Mudanças significativas de estrutura devem ser registradas como ADR.
+
+---
+
+## Regras para Arquivos de Governança
+
+A estrutura de governança em `.claude/` e `Instructions/` é **imutável** sem instrução explícita.
+Qualquer adição à estrutura de governança deve:
+1. Ser solicitada explicitamente pelo usuário.
+2. Ser registrada neste arquivo.
+3. Ser refletida nos imports de `CLAUDE.md`.
+
+---
+
+## Referências Cruzadas
+
+- `Instructions/architecture/technical-overview.md` — visão geral que reflete esta estrutura
+- `Instructions/architecture/patterns.md` — padrões que determinam a organização
+- `Instructions/architecture/naming-conventions.md` — nomenclatura de pastas e arquivos
+- `.claude/rules/folder-governance.md` — regras de governança de estrutura
+
+---
+
+## Histórico de Mudanças
+
+| Data | Mudança | Referência |
+|---|---|---|
+| Bootstrap | Estrutura inicial de governança criada | — |
+| 2026-03-15 | Estrutura de implementação definida: Features/Query, Features/Command, Shared | DA-004, DA-005 |
+| 2026-03-15 | Shared/Middleware/ criada: GlobalExceptionHandler registrado | DA-010, PAD-008 |
+| 2026-03-15 | Infra/ criada com subpastas Correlation/, ExceptionHandling/, Middlewares/; Shared/Middleware/ removida; GlobalExceptionHandler movido para Infra/ExceptionHandling/ | DA-011 |
+| 2026-03-15 | Infra/Security/ criada com ITokenService, AuthenticatedUser, TokenService, AuthenticateFilter, AuthenticateAttribute | DA-013 |
+| 2026-03-15 | wiki/ criada na raiz: 12 arquivos-fonte da GitHub Wiki; Instructions/wiki/ criada com wiki-governance.md | Instrução do usuário |
+| 2026-03-16 | Shared/ExternalApi/ documentada: padrão de integração HTTP externa com Refit + Polly (DA-017) | Instrução do usuário |
+| 2026-03-17 | Infra/HealthChecks/ adicionada: DatadogAgentHealthCheck | Instrução do usuário |
+| 2026-03-18 | Infra/Json/, Infra/ModelBinding/, Infra/ModelValidation/ documentadas: presentes no código mas ausentes do registro estrutural | Revisão de governança |
+| 2026-03-18 | Reorganização: solution movida para `src/`; projeto de testes movido de `tests/` para `src/`; pasta `tests/` removida; todos os projetos agora em `src/` | Instrução do usuário |
+| 2026-03-19 | Regra de residência de models adicionada: Input e Output de Features exclusivamente em `<Feature>Models/`, não em Shared | DA-020 |
+| 2026-03-21 | Infra/Logging/ documentada: DatadogHttpSink.cs e DatadogLogEntry.cs adicionados à estrutura; lacuna de governança corrigida | Análise de causas-raiz |
+| 2026-03-21 | .claude/skills/governance-behavior-tracking/ adicionada à estrutura de governança | Instrução do usuário |
+| 2026-03-22 | wiki/ reorganizada: estrutura por agrupamentos (Governance-*, Domain-*, Feature-*, Claude-*); páginas Infra-* e estruturais antigas substituídas por páginas com prefixo de grupo | Instrução do usuário |
+| 2026-03-30 | Template sanitizado: referências a features e integrações específicas removidas; projeto renomeado para Starter.Template.AOT | Sanitização de template |
+| 2026-03-30 | Completude: scripts/ adicionado à estrutura raiz; 3 rules faltantes adicionadas (execution-time-tracking, governance-audit, governance-behavior-tracking); 4 skills faltantes adicionadas (manage-pr-lifecycle, pr-analysis, validate-endpoints, verify-environment) | Auditoria de governança |
+| 2026-03-31 | .claude/rules/pre-planning-consultation.md e .claude/hooks/pre-planning-gate.sh adicionados à estrutura de governança | Instrução do usuário |
+| 2026-04-01 | .claude/skills/governance-validation-pipeline/ adicionada à estrutura de governança | Instrução do usuário |
+| 2026-04-01 | 4 novos hooks adicionados: session-start.sh (SessionStart), stop-verification.sh (Stop), bash-error-capture.sh (PostToolUseFailure), compact-context.sh (PreCompact/PostCompact) | Melhoria de governança com recursos avançados do Claude Code |
+| 2026-04-01 | .claude/agents/ adicionada: code-reviewer.md e governance-auditor.md — agentes especializados com memória persistente | Melhoria de governança com recursos avançados do Claude Code |
+| 2026-04-03 | wwwroot/ adicionada ao projeto de API: frontend estático com index.html, css/site.css, js/app.js, js/colors.js — Disk Explorer UI portado do GeminiClone | Instrução do usuário |

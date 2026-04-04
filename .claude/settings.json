@@ -1,0 +1,140 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": ["*"],
+    "deny": []
+  },
+  "autoMemoryEnabled": true,
+  "env": {
+    "GOVERNANCE_STRICT_MODE": "true",
+    "IDLE_THRESHOLD_MS": "120000",
+    "MCP_TIMEOUT": "60000",
+    "MCP_TOOL_TIMEOUT": "300000"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh || true"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-planning-gate.sh \"$CLAUDE_TOOL_INPUT_FILE_PATH\" || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(rm -rf *)",
+            "command": "echo '[PreToolUse] BLOQUEADO: comando rm -rf detectado. Confirme com o usuário antes de executar.' >&2; exit 2"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git push --force)",
+            "command": "echo '[PreToolUse] BLOQUEADO: git push --force detectado. Force push é proibido sem autorização explícita.' >&2; exit 2"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git push --force *)",
+            "command": "echo '[PreToolUse] BLOQUEADO: git push --force detectado. Force push é proibido sem autorização explícita.' >&2; exit 2"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git push --force-with-lease)",
+            "command": "echo '[PreToolUse] BLOQUEADO: git push --force-with-lease detectado. Force push é proibido sem autorização explícita.' >&2; exit 2"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git push --force-with-lease *)",
+            "command": "echo '[PreToolUse] BLOQUEADO: git push --force-with-lease detectado. Force push é proibido sem autorização explícita.' >&2; exit 2"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/instruction-change-detector.sh \"$CLAUDE_TOOL_INPUT_FILE_PATH\" || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/branch-guard.sh || true"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-timer.sh || true"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/post-commit-pr-reminder.sh || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/bash-error-capture.sh || true"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/compact-context.sh pre || true"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/compact-context.sh post || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/stop-verification.sh || true"
+          }
+        ]
+      }
+    ]
+  }
+}
