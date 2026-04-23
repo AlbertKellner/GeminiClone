@@ -39,3 +39,8 @@ _NCrunch_Sistema
 
 # Detritus
 *.ncrunchsolution
+
+# Claude Code transient state
+.claude/.session-timer
+.claude/.pre-planning-done
+.claude/.pr-analysis-context
